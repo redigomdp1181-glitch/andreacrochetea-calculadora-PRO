@@ -1,0 +1,1824 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Calculadora de Precios - Andrea Crochetea</title>
+  <meta name="theme-color" content="#8C7AA9"/>
+  <meta name="description" content="Calcula el precio justo de tus tejidos. Herramienta para emprendedoras.">
+  
+  <!-- html2canvas para generar la tarjeta de presupuesto -->
+  <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+  <!-- jsPDF para generar el PDF -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+  <!-- PWA & Icons -->
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" type="image/png" sizes="192x192" href="logo-192.png">
+  <link rel="apple-touch-icon" href="logo-192.png">
+
+  <style>
+    :root{
+      /* Paleta Andrea Crochetea */
+      --primary: #8C7AA9;       /* Lavanda oscuro */
+      --primary-dark: #6a5a82;
+      --secondary: #E1C5D2;     /* Rosa pálido */
+      --bg: #f9f7fc;
+      --card-bg: #ffffff;
+      --text: #4a4a4a;
+      --text-light: #7a7a7a;
+      --border: #eaddf5;
+      
+      --accent-gold: #fbbf24;   /* Para lo PRO */
+      --danger: #ef4444;
+      --success: #10b981;
+      --warning: #f59e0b;
+      
+      --radius: 16px;
+      --shadow: 0 10px 30px -10px rgba(140, 122, 169, 0.15);
+      
+      --font-main: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    }
+
+    * { box-sizing: border-box; outline: none; -webkit-tap-highlight-color: transparent; }
+    
+    body {
+      margin: 0;
+      font-family: var(--font-main);
+      background-color: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Marca de agua de fondo */
+    body::before {
+      content: 'Andrea Crochetea';
+      position: fixed;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%) rotate(-30deg);
+      font-size: 12vw;
+      font-weight: 900;
+      color: var(--primary);
+      opacity: 0.03;
+      pointer-events: none;
+      white-space: nowrap;
+      z-index: -1;
+    }
+
+    .wrap {
+      width: 100%;
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 20px;
+      position: relative;
+      z-index: 1;
+      flex: 1;
+    }
+
+    /* Header */
+    header {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      margin-bottom: 25px;
+    }
+    .logo-img {
+      width: 50px; height: 50px;
+      border-radius: 12px;
+      background: var(--secondary);
+      object-fit: cover;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+    .titles h1 {
+      font-size: 1.25rem;
+      margin: 0;
+      color: var(--primary-dark);
+      font-weight: 800;
+    }
+    .titles p {
+      margin: 0;
+      font-size: 0.85rem;
+      color: var(--text-light);
+    }
+
+    /* Tabs (Materiales / Biblioteca) */
+    .tabs { display: flex; gap: 10px; margin-bottom: 10px; }
+    .tab-btn {
+      border: none; background: transparent; padding: 8px 12px;
+      font-weight: 600; color: var(--text-light); border-radius: 8px;
+      cursor: pointer;
+    }
+    .tab-btn.active { background: var(--secondary); color: var(--primary-dark); }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    /* Cards */
+    .card {
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: var(--shadow);
+      border: 1px solid var(--border);
+      transition: transform 0.2s;
+    }
+    
+    .section-title {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--primary);
+      margin: 0 0 15px 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    /* Form Elements */
+    .form-group { margin-bottom: 15px; }
+    label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-bottom: 6px;
+      color: var(--text);
+    }
+    input[type="number"], input[type="text"], select {
+      width: 100%;
+      padding: 12px;
+      border-radius: 10px;
+      border: 2px solid var(--bg);
+      background: var(--bg);
+      font-size: 1rem;
+      color: var(--text);
+      transition: 0.2s;
+    }
+    input:focus {
+      border-color: var(--secondary);
+      background: #fff;
+    }
+
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+    
+    /* Result Boxes */
+    .result-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .res-box {
+      background: var(--bg);
+      padding: 10px;
+      border-radius: 12px;
+      text-align: center;
+      border: 1px solid var(--border);
+    }
+    .res-box.main {
+      background: #f0ebf8; /* Un lila muy suave */
+      border-color: var(--primary);
+      grid-column: span 3; /* Ocupa todo el ancho */
+      padding: 15px;
+    }
+    .res-label { font-size: 0.75rem; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px; }
+    .res-val { font-size: 1.1rem; font-weight: 800; color: var(--primary-dark); margin-top: 4px; }
+    .res-box.main .res-val { font-size: 2rem; color: var(--primary); }
+
+    /* Buttons */
+    .btn {
+      width: 100%;
+      padding: 14px;
+      border: none;
+      border-radius: 12px;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: 0.2s;
+    }
+    .btn-primary {
+      background: var(--primary);
+      color: white;
+      box-shadow: 0 4px 15px rgba(140, 122, 169, 0.4);
+    }
+    .btn-primary:active { transform: scale(0.98); }
+    
+    .btn-outline {
+      background: transparent;
+      border: 2px solid var(--border);
+      color: var(--text-light);
+    }
+
+    /* Botones Margen */
+    .margin-btn {
+      flex: 1;
+      padding: 8px;
+      font-size: 0.8rem;
+      border: 1px solid var(--border);
+      background: #fff;
+      border-radius: 8px;
+      cursor: pointer;
+      color: var(--text-light);
+      white-space: nowrap;
+    }
+    .margin-btn.active {
+      background: var(--secondary);
+      color: var(--primary-dark);
+      border-color: var(--primary);
+      font-weight: 700;
+    }
+    
+    /* Status Light Buttons */
+    .status-light {
+      width: 24px; height: 24px;
+      border-radius: 50%;
+      border: 2px solid transparent;
+      cursor: pointer;
+      opacity: 0.3;
+      transition: 0.2s;
+    }
+    .status-light.active {
+      opacity: 1;
+      transform: scale(1.2);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+      border-color: #fff;
+    }
+    .st-red { background: var(--danger); }
+    .st-yellow { background: var(--warning); }
+    .st-green { background: var(--success); }
+    
+    /* PRO Features */
+    .pro-locked {
+      position: relative;
+      /* No usamos pointer-events: none aquí porque bloquearía el Overlay hijo */
+      transition: 0.3s;
+    }
+    /* Se bloquean los inputs y botones internos, pero no el overlay */
+    .pro-locked .form-group, 
+    .pro-locked .row button,
+    .pro-locked .tabs,
+    .pro-locked .tab-content {
+      pointer-events: none;
+      opacity: 0.5;
+      filter: grayscale(1);
+    }
+
+    .pro-badge {
+      position: absolute;
+      top: -10px; right: -10px;
+      background: var(--accent-gold);
+      color: #713f12;
+      font-size: 0.7rem;
+      font-weight: 800;
+      padding: 4px 8px;
+      border-radius: 20px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      z-index: 10;
+    }
+    
+    .pro-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(255,255,255,0.6);
+      backdrop-filter: blur(2px);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 5;
+      border-radius: var(--radius);
+      text-align: center;
+      padding: 20px;
+      pointer-events: auto; /* El overlay sí recibe clics */
+    }
+    .pro-overlay p { font-weight: 700; color: var(--primary-dark); margin-bottom: 10px; }
+    
+    .btn-gold {
+      background: linear-gradient(135deg, #fcd34d 0%, #fbbf24 100%);
+      color: #78350f;
+      border: none;
+    }
+
+    /* Modal */
+    .modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      backdrop-filter: blur(4px);
+    }
+    .modal.active { display: flex; }
+    .modal-card {
+      background: #fff;
+      padding: 25px;
+      border-radius: 20px;
+      width: 100%;
+      max-width: 400px;
+      text-align: center;
+      animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    @keyframes popIn { from{transform:scale(0.8);opacity:0} to{transform:scale(1);opacity:1} }
+    
+    .modal h3 { margin: 0 0 10px; color: var(--primary-dark); }
+    .modal p { color: var(--text-light); font-size: 0.9rem; margin-bottom: 20px; }
+    
+    /* Footer */
+    footer {
+      text-align: center;
+      padding: 20px;
+      font-size: 0.8rem;
+      color: var(--text-light);
+      margin-top: auto;
+    }
+    
+    /* Material List */
+    .mat-item {
+      display: flex; gap: 10px; align-items: center;
+      margin-bottom: 8px;
+      font-size: 0.9rem;
+    }
+    .mat-del {
+      background: #fee2e2; color: #b91c1c; border:none; width: 28px; height: 28px; border-radius: 6px; cursor: pointer;
+      display:flex; align-items:center; justify-content:center;
+    }
+    
+    /* Timer Display */
+    #timerDisplay {
+      font-size: 2.5rem;
+      font-weight: 800;
+      color: var(--primary-dark);
+      font-variant-numeric: tabular-nums;
+      line-height: 1;
+    }
+
+    /* DARK MODE */
+    body.dark-mode {
+      --bg: #1e1e2e;
+      --card-bg: #2d2d44;
+      --text: #e0e0e0;
+      --text-light: #a0a0a0;
+      --border: #4a4a6a;
+      --primary: #a89ac4;
+      --primary-dark: #dcdcdc;
+      --secondary: #4a4a6a; 
+    }
+    body.dark-mode input, 
+    body.dark-mode select {
+      background: #1e1e2e;
+      color: #e0e0e0;
+      border-color: #4a4a6a;
+    }
+    body.dark-mode .res-box.main {
+      background: #3a3a5e;
+      border-color: #a89ac4;
+    }
+    body.dark-mode .res-box.main .res-val { color: #fff; }
+
+    body.dark-mode .mat-del {
+        background: #5c2b2b;
+        color: #ff9999;
+    }
+    body.dark-mode .margin-btn {
+        background: #363654;
+        border-color: #4a4a6a;
+        color: #a0a0a0;
+    }
+    body.dark-mode .margin-btn.active {
+        background: #4a4a6a;
+        color: #fff;
+    }
+    
+    body.dark-mode #configPanel {
+        background: #2d2d44 !important;
+        border-color: #4a4a6a !important;
+    }
+    body.dark-mode #configPanel h3,
+    body.dark-mode #configPanel div {
+        color: #e0e0e0 !important;
+    }
+    
+    body.dark-mode .modal-card {
+        background: #2d2d44;
+        color: #e0e0e0;
+    }
+    body.dark-mode .modal h3 { color: #e0e0e0; }
+
+    body.dark-mode #savedList > div {
+        background: #363654 !important;
+        border-color: #4a4a6a !important;
+    }
+    body.dark-mode #savedList > div > button {
+        background: #2d2d44 !important;
+        border-color: #4a4a6a !important;
+        color: #e0e0e0;
+    }
+
+    body.dark-mode .titles h1 { color: #dcdcdc; }
+    body.dark-mode .section-title { color: #a89ac4; }
+    body.dark-mode .res-val { color: #dcdcdc; }
+    body.dark-mode label { color: #e0e0e0; }
+
+    body.dark-mode #libraryList > div {
+        background: #2d2d44 !important;
+        border-bottom-color: #4a4a6a !important;
+    }
+    body.dark-mode #libraryList > div > div > div { color: #e0e0e0; }
+    body.dark-mode #libraryList button {
+        background: #363654 !important;
+        border-color: #4a4a6a !important;
+        color: #e0e0e0;
+    }
+    
+    body.dark-mode #budgetCard { color: #333; }
+    
+    body.dark-mode #timerPanel {
+      background: #363654 !important;
+      border-color: #4a4a6a !important;
+    }
+    body.dark-mode #timerDisplay { color: #e0e0e0 !important; }
+
+  </style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <img src="logo-192.png" onerror="this.style.display='none'" class="logo-img" alt="Logo">
+    <div class="titles">
+      <h1>Calculadora de Precios</h1>
+      <p>Calcula el valor justo de tus tejidos</p>
+    </div>
+    <div style="margin-left:auto; display:flex; gap:10px">
+      <button id="btnLang" class="btn-outline" style="width:auto;padding:8px 12px;border-radius:8px" title="Cambiar Idioma">ES</button>
+      <button id="btnDarkMode" class="btn-outline" style="width:auto;padding:8px 12px;border-radius:8px" title="Modo Oscuro">🌙</button>
+      <button id="btnWakeLock" class="btn-outline" style="width:auto;padding:8px 12px;border-radius:8px" title="Pantalla Encendida">💡</button>
+      <button id="btnInstall" class="btn-outline" style="width:auto;padding:8px 12px;border-radius:8px" title="Cómo instalar">📲</button>
+      <button id="btnConfig" class="btn-outline" style="width:auto;padding:8px 12px;border-radius:8px" title="Configuración">⚙️</button>
+    </div>
+  </header>
+
+  <!-- CONFIGURACIÓN RÁPIDA -->
+  <div id="configPanel" class="card" style="display:block; background:#fefce8; border-color:#fef08a; position:relative">
+    <button id="btnCloseConfig" style="position:absolute; top:10px; right:10px; background:transparent; border:none; cursor:pointer; font-size:1.2rem; color:#854d0e">×</button>
+    <h3 style="margin-top:0; font-size:1rem; color:#854d0e">⚙️ Configuración Base</h3>
+    <div class="row">
+      <div>
+        <label>Moneda</label>
+        <select id="cfg_moneda">
+          <option value="$">$ (Peso/Local)</option>
+          <option value="US$">US$ (Dólar)</option>
+          <option value="€">€ (Euro)</option>
+        </select>
+      </div>
+      <div>
+        <label>Tu hora</label>
+        <input id="cfg_hora" type="number" value="1000" placeholder="Valor de tu hora">
+      </div>
+    </div>
+    <div style="margin-top:10px; font-size:0.8rem; color:#854d0e">
+      💡 Define cuánto quieres ganar por hora de trabajo. Esto es tu sueldo.
+    </div>
+  </div>
+
+  <!-- 1. MATERIALES -->
+  <section class="card">
+    <div class="section-title">
+      <span>🧶 Materiales</span>
+      <span id="totalMat" style="color:var(--text-light); font-weight:400">$0</span>
+    </div>
+    
+    <div id="matList"></div>
+
+    <div style="margin-top:15px; border-top:1px dashed var(--border); padding-top:15px">
+      <div class="row" style="grid-template-columns: 1.5fr 1fr">
+        <div>
+          <label>Material</label>
+          <input id="new_mat_name" type="text" placeholder="Nombre del material">
+        </div>
+        <div>
+          <div style="display:flex; justify-content:space-between; margin-bottom:6px">
+            <label style="margin:0">Cant.</label>
+            <select id="new_mat_unit" style="width:auto; padding:2px; font-size:0.8rem; border:none; background:transparent">
+              <option value="g">Gramos (grs)</option>
+              <option value="cm">Centímetros (cm)</option>
+              <option value="m">Metros (m)</option>
+              <option value="yd">Yardas (yd)</option>
+              <option value="oz">Onzas (oz)</option>
+              <option value="un">Unidad (un)</option>
+            </select>
+          </div>
+          <input id="new_mat_g" type="text" inputmode="decimal" placeholder="300">
+        </div>
+      </div>
+      <div class="row" style="margin-top:10px">
+        <div>
+          <label>Precio de compra ($)</label>
+          <input id="new_mat_price" type="number" placeholder="Ej: 4500">
+        </div>
+        <div>
+          <label id="lbl_mat_weight">Gramos totales</label>
+          <input id="new_mat_weight" type="text" inputmode="decimal" value="100" placeholder="100">
+        </div>
+      </div>
+      <button id="btnAddMat" class="btn btn-outline" style="margin-top:10px; font-size:0.9rem">+ Agregar Material</button>
+      
+      <!-- Biblioteca rápida (PRO) -->
+      <div id="quickLibSection" style="margin-top:15px; display:none; border-top:1px dashed var(--border); padding-top:10px">
+        <label style="color:var(--primary)">📂 Cargar desde Biblioteca (PRO)</label>
+        <div style="display:flex; gap:10px;">
+          <select id="quickLibSelect" style="flex:1"></select>
+          <button id="btnQuickAdd" class="btn-primary" style="width:auto; padding:0 15px; font-size:1.2rem; border-radius:10px">+</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 2. TIEMPO Y EXTRAS -->
+  <section class="card">
+    <div class="section-title">⏱️ Tiempo y Extras</div>
+    
+    <!-- CRONÓMETRO -->
+    <div id="timerPanel" style="background:#f3e8ff; padding:15px; border-radius:12px; margin-bottom:20px; text-align:center; border:1px solid #d8b4fe">
+      <div id="timerDisplay">00:00:00</div>
+      <div style="margin-top:10px; display:flex; justify-content:center; gap:10px">
+        <button id="btnTimer" class="btn btn-primary" style="width:auto; padding:8px 20px; font-size:0.9rem">
+          ▶ Iniciar Tiempo
+        </button>
+        <button id="btnFinishTimer" class="btn btn-primary" style="width:auto; padding:8px 20px; font-size:0.9rem; background:var(--accent-gold); color:#78350f; display:none">
+          🏁 Finalizar
+        </button>
+      </div>
+    </div>
+
+    <div class="row">
+      <div>
+        <label>Horas Trabajadas</label>
+        <input id="inp_horas" type="number" step="0.5" placeholder="0">
+      </div>
+      <div>
+        <label>Minutos</label>
+        <input id="inp_min" type="number" step="5" placeholder="0">
+      </div>
+    </div>
+    
+    <div class="section-title" style="margin-top:20px; font-size:0.9rem; color:var(--text)">
+      <span>📦 Otros Gastos (Packaging, Envío...)</span>
+      <span id="totalExtra" style="color:var(--text-light); font-weight:400">$0</span>
+    </div>
+    
+    <div id="extraList"></div>
+
+    <div style="margin-top:10px; border-top:1px dashed var(--border); padding-top:15px">
+      <div class="row" style="grid-template-columns: 1.5fr 1fr">
+        <div>
+          <label>Tipo de Gasto</label>
+          <input list="extra_suggestions" id="new_extra_type" placeholder="Ej: Envío" style="width:100%">
+          <datalist id="extra_suggestions">
+            <option value="Packaging">
+            <option value="Etiquetas">
+            <option value="Envío">
+            <option value="Comisión Plataforma">
+            <option value="Publicidad">
+            <option value="Otro">
+          </datalist>
+        </div>
+        <div>
+          <label>Costo ($)</label>
+          <input id="new_extra_cost" type="number" placeholder="0">
+        </div>
+      </div>
+      <button id="btnAddExtra" class="btn btn-outline" style="margin-top:10px; font-size:0.9rem">+ Agregar Gasto</button>
+    </div>
+  </section>
+
+  <!-- 3. RESULTADOS -->
+  <section class="card" style="border-color:var(--primary); box-shadow: 0 4px 20px rgba(140,122,169,0.2)">
+    <div class="section-title" style="margin-bottom:5px">✨ Precio Sugerido</div>
+    
+    <div class="row" style="align-items:center; margin-bottom:15px">
+       <div style="flex:1">
+          <label>Cantidad de Unidades</label>
+          <input id="inp_quantity" type="number" value="1" min="1" style="width:100%; text-align:center; font-weight:700">
+       </div>
+       <div style="flex:1.5; font-size:0.8rem; color:var(--text-light); text-align:right">
+          Define cantidad para ver el total del pedido.
+       </div>
+    </div>
+
+    <div class="result-grid">
+      <div class="res-box main">
+        <div class="res-label">Precio de Venta Total</div>
+        <div id="res_venta" class="res-val">$0</div>
+        <div id="res_unit" style="font-size:0.9rem; color:var(--primary); font-weight:600; margin-top:5px; display:none"></div>
+      </div>
+      <div class="res-box" style="cursor:pointer" onclick="setMarginTo(1.0, 'min')">
+        <div class="res-label">Costo (Min)</div>
+        <div id="res_min" class="res-val">$0</div>
+      </div>
+      <div class="res-box" style="cursor:pointer; border:1px dashed var(--primary)" onclick="setMarginTo(1.25, 'mayor')">
+        <div class="res-label">Mayorista</div>
+        <div id="res_mayor" class="res-val">$0</div>
+      </div>
+    </div>
+    
+    <div style="margin-top:15px; text-align:center">
+      <label style="display:block; margin-bottom:8px">Margen de ganancia (Elige uno):</label>
+      <div id="margin_buttons" style="display:flex; gap:6px; flex-wrap:wrap; justify-content:center">
+        <!-- Buttons injected by JS -->
+      </div>
+    </div>
+  </section>
+
+  <!-- SECCIÓN PRO (BLOQUEADA POR DEFECTO) -->
+  <section id="proSection" class="card pro-locked">
+    <div class="pro-badge">PRO</div>
+    
+    <!-- Bloqueo Overlay -->
+    <div id="proOverlay" class="pro-overlay">
+      <p>🔒 Funciones PRO</p>
+      <div style="font-size:0.85rem; color:var(--text-light); margin-bottom:15px; max-width:80%">
+        Guarda tus proyectos para no perderlos y exporta presupuestos profesionales.
+      </div>
+      <button id="btnUnlockTrigger" class="btn btn-gold" style="width:auto; padding:10px 24px; box-shadow:0 4px 12px rgba(251, 191, 36, 0.4)">
+        Desbloquear versión PRO
+      </button>
+    </div>
+
+    <!-- Contenido PRO -->
+    <div class="tabs">
+      <button class="tab-btn active" onclick="openProTab('tabProject')">📂 Proyectos</button>
+      <button class="tab-btn" onclick="openProTab('tabLibrary')">🧵 Biblioteca / Stock</button>
+      <button class="tab-btn" onclick="openProTab('tabBudget')">🧾 Presupuesto</button>
+    </div>
+
+    <!-- TAB 1: PROYECTOS -->
+    <div id="tabProject" class="tab-content active">
+      <!-- Importar / Exportar Controles -->
+      <div style="text-align:right; margin-bottom:10px">
+        <input type="file" id="inpImportFile" accept=".json" style="display:none">
+        <button id="btnImportJSON" class="btn-outline" style="padding:6px 12px; border-radius:8px; font-size:0.8rem">📥 Importar Proyecto</button>
+      </div>
+
+      <div class="form-group">
+        <label>Nombre del Proyecto</label>
+        <div style="display:flex; flex-direction:column; gap:10px; margin-bottom:10px">
+          <div style="display:flex; gap:10px">
+            <input id="pro_name" type="text" placeholder="Ej: Manta Granny Square" style="flex:1">
+            <input id="pro_client" type="text" placeholder="Cliente (Opcional)" style="flex:1">
+          </div>
+          
+          <div style="display:flex; gap:10px; align-items:center; background:#f9f9f9; padding:8px; border-radius:10px; border:1px solid #eee">
+            <label style="margin:0; font-size:0.85rem; color:#666">Estado:</label>
+            <div id="status_group" style="display:flex; gap:10px">
+              <button class="status-light st-red active" data-status="Pendiente" title="Pendiente"></button>
+              <button class="status-light st-yellow" data-status="Señado" title="Señado"></button>
+              <button class="status-light st-green" data-status="Entregado" title="Entregado"></button>
+            </div>
+            <span id="status_label" style="font-size:0.8rem; font-weight:700; margin-left:auto; color:var(--text-light)">Pendiente</span>
+          </div>
+        </div>
+      </div>
+      <div class="row">
+        <!-- Lógica de Guardar/Editar se maneja en JS -->
+        <button id="btnSave" class="btn btn-primary">💾 Guardar Nuevo</button>
+        <button id="btnUpdate" class="btn btn-primary" style="display:none; background:var(--secondary); color:var(--primary-dark)">✏️ Actualizar</button>
+        <button id="btnExport" class="btn btn-outline">📄 PDF Resumen</button>
+      </div>
+      <button id="btnClearProj" class="btn btn-outline" style="margin-top:10px; font-size:0.8rem" onclick="clearProject()">✨ Nuevo Proyecto (Limpiar)</button>
+      
+      <!-- Lista de guardados -->
+      <div id="savedList" style="margin-top:20px; border-top:1px solid var(--border); padding-top:15px;">
+        <label>Proyectos Guardados</label>
+        <div id="projectsContainer" style="display:grid; gap:8px"></div>
+      </div>
+    </div>
+
+    <!-- TAB 2: BIBLIOTECA -->
+    <div id="tabLibrary" class="tab-content">
+      <!-- Importar / Exportar Biblioteca -->
+      <div style="text-align:right; margin-bottom:10px; display:flex; justify-content:flex-end; gap:5px">
+        <input type="file" id="inpImportLib" accept=".json" style="display:none">
+        <button id="btnImportLib" class="btn-outline" style="padding:6px 12px; border-radius:8px; font-size:0.8rem">📥 Importar</button>
+        <button id="btnExportLib" class="btn-outline" style="padding:6px 12px; border-radius:8px; font-size:0.8rem" onclick="exportLibrary()">📤 Exportar</button>
+      </div>
+
+      <div style="background:#fefce8; padding:10px; border-radius:12px; margin-bottom:15px; font-size:0.85rem; color:#854d0e; border:1px solid #fde047">
+        Guarda aquí tus materiales frecuentes (lanas, ojitos, rellenos) para usarlos rápido.
+      </div>
+
+      <div class="row">
+        <div>
+          <label>Material / Item</label>
+          <input id="lib_name" type="text" placeholder="Ej: Ojos seguridad 10mm">
+        </div>
+        <div>
+          <label>Costo de Compra ($)</label>
+          <input id="lib_price" type="number" placeholder="Ej: 500"><button type="button" onclick="abrirConversor()" style="padding:10px; cursor:pointer; border-radius:10px; border:2px solid var(--primary); background:var(--secondary); font-size:1.2rem; display:flex; align-items:center; justify-content:center" title="Conversor de Insumos">📏</button>
+        </div>
+      </div>
+      <div class="row" style="margin-top:10px">
+        <div style="display:flex; gap:5px">
+          <div style="flex:1">
+             <label>Cant.</label>
+             <input id="lib_unit" type="number" value="1" placeholder="Ej: 100">
+          </div>
+          <div style="flex:1">
+             <label>Unidad</label>
+             <select id="lib_unit_type" style="width:100%; padding:12px; border-radius:10px; border:2px solid var(--bg); background:var(--bg)">
+              <option value="g">g</option>
+              <option value="cm">cm</option>
+              <option value="m">m</option>
+              <option value="yd">yd</option>
+              <option value="oz">oz</option>
+              <option value="un">un</option>
+             </select>
+          </div>
+        </div>
+        <div>
+          <label>Stock (Cantidad)</label>
+          <input id="lib_stock" type="number" placeholder="Opcional">
+        </div>
+      </div>
+      <button id="libAddBtn" class="btn btn-primary" style="margin-top:15px">Guardar en Biblioteca</button>
+      
+      <div id="libraryList" style="margin-top:20px; border-top:1px solid var(--border); padding-top:15px"></div>
+    </div>
+
+    <!-- TAB 3: GENERAR TARJETA -->
+    <div id="tabBudget" class="tab-content">
+      <div style="text-align:center; margin-bottom:15px">
+        <button id="btnGenCard" class="btn btn-gold" style="box-shadow:0 4px 15px rgba(251,191,36,0.4)">
+          ✨ Generar Tarjeta para Cliente
+        </button>
+      </div>
+      <p style="font-size:0.85rem; text-align:center; color:var(--text-light)">
+        Crea una imagen profesional para enviar por Instagram o WhatsApp sin mostrar tus costos.
+      </p>
+    </div>
+
+  </section>
+
+  <footer>
+    Hecho con 💜 por Andrea Crochetea<br>
+    <a href="#" style="color:var(--primary); text-decoration:none; font-weight:600">Ver más herramientas</a>
+  </footer>
+</div>
+
+<!-- MODAL TARJETA PRESUPUESTO -->
+<div id="budgetModal" class="modal" style="z-index:200">
+  <div class="modal-card" style="max-width:380px; padding:0; overflow:hidden; text-align:left; background:#e5e5e5">
+    
+    <!-- Área Capturable -->
+    <div id="budgetCard" style="background:#fff; position:relative; overflow:hidden">
+      <!-- Fondo decorativo suave -->
+      <div style="position:absolute; inset:0; background:linear-gradient(135deg, #fff0f5 0%, #fff 100%); z-index:0"></div>
+      <div style="position:absolute; top:-50px; right:-50px; width:150px; height:150px; background:#fce7f3; border-radius:50%; opacity:0.5; z-index:0"></div>
+      
+      <div style="position:relative; z-index:1; padding:25px">
+        <!-- Cabecera -->
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px">
+          <div>
+            <div style="font-size:0.75rem; text-transform:uppercase; letter-spacing:1px; color:#888">Presupuesto</div>
+            <div id="cardBrandName" contenteditable="true" style="font-weight:800; font-size:1.1rem; color:#444; border-bottom:1px dashed #ccc; min-width:150px">Andrea Crochetea</div>
+          </div>
+          <!-- Logo Usuario -->
+          <div id="userLogoArea" style="width:60px; height:60px; background:#eee; border-radius:50%; overflow:hidden; border:2px solid #fff; box-shadow:0 4px 10px rgba(0,0,0,0.1); cursor:pointer; position:relative">
+            <img id="userLogoImg" src="logo-192.png" style="width:100%; height:100%; object-fit:cover">
+            <div style="position:absolute; inset:0; background:rgba(0,0,0,0.1); display:flex; align-items:center; justify-content:center; opacity:0; transition:0.2s" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0">
+              <span style="font-size:1.2rem">📷</span>
+            </div>
+            <input type="file" id="inpUserLogo" accept="image/*" style="display:none">
+          </div>
+        </div>
+
+        <!-- Info Principal -->
+        <h2 id="cardTitle" style="margin:0 0 5px 0; font-size:1.5rem; color:#333; line-height:1.2">Proyecto</h2>
+        <div style="width:40px; height:4px; background:var(--primary); border-radius:2px; margin-bottom:20px"></div>
+        
+        <!-- Precio -->
+        <div style="background:#fff; border:1px solid #eee; border-radius:16px; padding:20px; text-align:center; box-shadow:0 4px 20px rgba(0,0,0,0.04); margin-bottom:20px">
+          <div style="font-size:0.8rem; color:#888; text-transform:uppercase">Valor Total</div>
+          <div id="cardPrice" style="font-size:2.5rem; font-weight:900; color:var(--primary-dark); letter-spacing:-1px">$0</div>
+          <div id="cardBreakdown" style="font-size:0.8rem; color:#666; margin-top:5px"></div>
+          <!-- Linea de Seña (50%) -->
+          <div id="cardDeposit" style="font-size:0.9rem; color:var(--primary); margin-top:5px; font-weight:600"></div>
+        </div>
+        
+        <div id="cardClient" style="text-align:center; font-weight:700; margin-bottom:10px; color:#555"></div>
+
+        <!-- Notas editables -->
+        <div contenteditable="true" style="font-size:0.85rem; color:#666; background:#f9f9f9; padding:10px; border-radius:8px; border:1px dashed #ddd; outline:none">
+          Válido por 15 días.<br>Se reserva con el 50%.<br>¡Gracias por elegir trabajo artesanal!
+        </div>
+        
+        <!-- Footer Tarjeta -->
+        <div style="margin-top:25px; display:flex; justify-content:space-between; align-items:flex-end">
+          <div style="font-size:0.7rem; color:#aaa">Generado con<br>Calculadora Andrea Crochetea</div>
+          <div style="font-size:1.5rem">🧶</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Controles Modal -->
+    <div style="padding:15px; background:#fff; border-top:1px solid #eee; display:flex; gap:10px; justify-content:space-between">
+      <button id="btnCloseCard" class="btn btn-outline" style="flex:1">Cerrar</button>
+      <button id="btnDownloadCard" class="btn btn-primary" style="flex:2">📸 Imagen</button>
+      <button id="btnDownloadPDF" class="btn btn-primary" style="flex:2; background:#e11d48">📄 PDF</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL INSTALACIÓN -->
+<div id="installModal" class="modal" style="z-index:250">
+  <div class="modal-card" style="text-align:left; max-width:500px">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px">
+      <h3 style="margin:0">📲 Cómo instalar la App</h3>
+      <button id="btnCloseInstall" style="background:transparent; border:none; font-size:1.5rem; cursor:pointer">×</button>
+    </div>
+    
+    <div style="max-height:60vh; overflow-y:auto; padding-right:5px">
+      <div style="margin-bottom:20px">
+        <h4 style="margin:0 0 5px 0; color:var(--primary)">🤖 Android (Chrome)</h4>
+        <ol style="margin:0; padding-left:20px; font-size:0.9rem; color:#555">
+          <li>Abre el menú de Chrome (3 puntitos ⋮ arriba).</li>
+          <li>Toca <b>"Instalar aplicación"</b> o "Agregar a pantalla principal".</li>
+          <li>Confirma en "Instalar".</li>
+        </ol>
+      </div>
+
+      <div style="margin-bottom:20px">
+        <h4 style="margin:0 0 5px 0; color:var(--primary)">🍎 iPhone / iPad (Safari)</h4>
+        <ol style="margin:0; padding-left:20px; font-size:0.9rem; color:#555">
+          <li>Toca el botón <b>Compartir</b> (cuadrado con flecha ⬆️ abajo).</li>
+          <li>Busca y toca <b>"Agregar al inicio"</b> (Add to Home Screen).</li>
+          <li>Dale a "Agregar" arriba a la derecha.</li>
+        </ol>
+      </div>
+
+      <div>
+        <h4 style="margin:0 0 5px 0; color:var(--primary)">💻 PC (Windows / Mac)</h4>
+        <ol style="margin:0; padding-left:20px; font-size:0.9rem; color:#555">
+          <li>En <b>Chrome/Edge</b>: Busca un ícono de una pantallita con flecha (📥) en la barra de dirección (a la derecha de la URL). Toca ahí e "Instalar".</li>
+          <li>En <b>Safari (Mac)</b>: Archivo > Agregar al Dock.</li>
+        </ol>
+      </div>
+    </div>
+    
+    <div style="margin-top:20px; text-align:center; font-size:0.85rem; background:#f0fdf4; padding:10px; border-radius:8px; color:#166534">
+      ✨ Una vez instalada, la app funcionará <b>sin internet</b> y a pantalla completa.
+    </div>
+  </div>
+</div>
+
+<!-- MODAL DESBLOQUEO -->
+<div id="unlockModal" class="modal">
+  <div class="modal-card">
+    <h3>Desbloquear PRO 🔓</h3>
+    <p>Se ha detectado tu dispositivo.</p>
+    
+    <div style="background:#f3f4f6; padding:10px; border-radius:8px; margin-bottom:20px; font-family:monospace; font-size:1.2rem; letter-spacing:2px; color:var(--primary)">
+      <span id="deviceToken">GENERANDO...</span>
+    </div>
+
+    <button id="btnVerifyCode" class="btn btn-primary">Activar Prueba / Acceso</button>
+    <button id="btnCloseModal" style="background:transparent; border:none; color:var(--text-light); margin-top:15px; cursor:pointer; font-size:0.9rem">Cancelar</button>
+  </div>
+</div>
+
+<!-- Scripts -->
+<script>
+  // --- ESTADO ---
+  const state = {
+    materials: [], 
+    extrasList: [], 
+    library: [],   
+    moneda: '$',
+    hora: 1000,
+    horas: 0,
+    min: 0,
+    margen: 1.5,
+    quantity: 1, // Nuevo: Cantidad de unidades
+    status: 'Pendiente', // Nuevo: Status default
+    currentProjectId: null,
+    isPro: false,
+    lang: 'es',
+    darkMode: false,
+    timerInterval: null,
+    timerStart: 0,
+    elapsedMs: 0
+  };
+
+  const marginOptions = [
+    { val: 1.1, label: '10%' },
+    { val: 1.2, label: '20%' },
+    { val: 1.3, label: '30%' },
+    { val: 1.5, label: '50%' },
+    { val: 2.0, label: '100%' }
+  ];
+
+  const translations = {
+    es: {
+      gramos: 'Gramos (grs)',
+      onzas: 'Onzas (oz)',
+      metros: 'Metros (m)',
+      centimetros: 'Centímetros (cm)',
+      yardas: 'Yardas (yd)',
+      unidad: 'Unidad (un)',
+      gramos_total: 'Gramos totales',
+      onzas_total: 'Onzas totales',
+      metros_total: 'Metros totales',
+      centimetros_total: 'Centímetros totales',
+      yardas_total: 'Yardas totales',
+      unidades_total: 'Unidades totales',
+      iniciar_tiempo: '▶ Iniciar Tiempo',
+      pausar_tiempo: '⏸ Pausar Tiempo',
+      reanudar_tiempo: '▶ Reanudar',
+      sena_reserva: 'Seña para reserva (50%)'
+    },
+    en: {
+      gramos: 'Grams (g)',
+      onzas: 'Ounces (oz)',
+      metros: 'Meters (m)',
+      centimetros: 'Centimeters (cm)',
+      yardas: 'Yards (yd)',
+      unidad: 'Unit (un)',
+      gramos_total: 'Total Grams',
+      onzas_total: 'Total Ounces',
+      metros_total: 'Total Meters',
+      centimetros_total: 'Total Centimeters',
+      yardas_total: 'Total Yards',
+      unidades_total: 'Total Units',
+      iniciar_tiempo: '▶ Start Timer',
+      pausar_tiempo: '⏸ Pause Timer',
+      reanudar_tiempo: '▶ Resume',
+      sena_reserva: 'Deposit for reservation (50%)'
+    }
+  };
+
+  const $ = id => document.getElementById(id);
+
+  function init(){
+    const savedCfg = localStorage.getItem('ac_calc_cfg');
+    if(savedCfg){
+      const cfg = JSON.parse(savedCfg);
+      state.moneda = cfg.moneda || '$';
+      state.hora = cfg.hora || 1000;
+      state.isPro = cfg.isPro || false;
+      state.lang = cfg.lang || 'es';
+      state.darkMode = cfg.darkMode || false;
+    }
+
+    if(state.darkMode) {
+      document.body.classList.add('dark-mode');
+      $('btnDarkMode').textContent = '☀️';
+    }
+
+    const savedBrand = localStorage.getItem('ac_brand_name');
+    if(savedBrand) $('cardBrandName').textContent = savedBrand;
+    
+    // UI Init
+    $('cfg_moneda').value = state.moneda;
+    $('cfg_hora').value = state.hora;
+    
+    renderMarginButtons();
+    initStatusButtons();
+    
+    // Init Margin Button Active State
+    updateMarginUI();
+
+    if(state.isPro) unlockUI();
+    
+    renderMatList();
+    renderExtraList();
+    recalc();
+  }
+
+  // --- MARGIN BUTTONS ---
+  function renderMarginButtons(){
+    const c = $('margin_buttons');
+    c.innerHTML = '';
+    marginOptions.forEach(opt => {
+      const btn = document.createElement('button');
+      btn.className = 'margin-btn';
+      btn.textContent = opt.label;
+      btn.onclick = () => {
+        state.margen = opt.val;
+        updateMarginUI();
+        recalc();
+      };
+      c.appendChild(btn);
+    });
+  }
+
+  function updateMarginUI(){
+    const btns = document.querySelectorAll('.margin-btn');
+    btns.forEach(b => {
+      // Check if button label matches current state.margen logic
+      // Note: float comparison might be tricky, checking approximate
+      const btnVal = parseFloat(b.textContent.replace('%','')) / 100 + 1; // 10% -> 1.1
+      // Or just map back from options
+      const opt = marginOptions.find(o => o.label === b.textContent);
+      if(opt && Math.abs(opt.val - state.margen) < 0.01) {
+         b.classList.add('active');
+      } else {
+         b.classList.remove('active');
+      }
+    });
+  }
+
+  // --- STATUS BUTTONS ---
+  function initStatusButtons(){
+     const btns = document.querySelectorAll('.status-light');
+     btns.forEach(b => {
+       b.addEventListener('click', () => {
+         state.status = b.getAttribute('data-status');
+         updateStatusUI();
+         // Auto-save if in project mode
+         if(state.currentProjectId) saveProject(true);
+       });
+     });
+  }
+
+  function updateStatusUI(){
+     const btns = document.querySelectorAll('.status-light');
+     btns.forEach(b => {
+       if(b.getAttribute('data-status') === state.status){
+         b.classList.add('active');
+         // Update label
+         $('status_label').textContent = state.status;
+         // Color label
+         if(state.status === 'Pendiente') $('status_label').style.color = 'var(--danger)';
+         if(state.status === 'Señado') $('status_label').style.color = 'var(--warning)';
+         if(state.status === 'Entregado') $('status_label').style.color = 'var(--success)';
+       } else {
+         b.classList.remove('active');
+       }
+     });
+  }
+
+  // --- QUANTITY ---
+  $('inp_quantity').addEventListener('input', (e) => {
+     let v = parseInt(e.target.value);
+     if(v < 1 || isNaN(v)) v = 1;
+     state.quantity = v;
+     recalc();
+  });
+
+  // --- CALCULATION ---
+  function recalc(){
+    // 1. Costo Unitario
+    const costMat = state.materials.reduce((acc, m) => acc + m.cost, 0);
+    $('totalMat').textContent = fmt(costMat);
+
+    const totalHoras = state.horas + (state.min / 60);
+    const costTiempo = totalHoras * state.hora;
+
+    const costExtras = state.extrasList.reduce((acc, e) => acc + e.cost, 0);
+    $('totalExtra').textContent = fmt(costExtras);
+
+    const costoUnitario = costMat + costTiempo + costExtras;
+    const pVentaUnitario = costoUnitario * state.margen;
+    const pMayorUnitario = costoUnitario * 1.25;
+
+    // 2. Totales x Cantidad
+    const q = state.quantity;
+    const totalVenta = pVentaUnitario * q;
+    const totalCosto = costoUnitario * q;
+    const totalMayor = pMayorUnitario * q;
+
+    // Render
+    $('res_min').textContent = fmt(totalCosto);
+    $('res_venta').textContent = fmt(totalVenta);
+    $('res_mayor').textContent = fmt(totalMayor);
+
+    if(q > 1){
+       $('res_unit').style.display = 'block';
+       $('res_unit').textContent = `Unitario: ${fmt(pVentaUnitario)}`;
+    } else {
+       $('res_unit').style.display = 'none';
+    }
+  }
+
+  function fmt(n){
+    return state.moneda + ' ' + n.toLocaleString('es-AR', {minimumFractionDigits:0, maximumFractionDigits:0});
+  }
+  
+  // --- MATERIALES ---
+  $('new_mat_unit').addEventListener('change', updateUnitLabel);
+
+  function updateUnitLabel(){
+    const val = $('new_mat_unit').value;
+    const lbl = $('lbl_mat_weight');
+    const t = translations[state.lang] || translations['es'];
+    
+    if(val === 'g') lbl.textContent = t.gramos_total;
+    if(val === 'oz') lbl.textContent = t.onzas_total;
+    if(val === 'm') lbl.textContent = t.metros_total;
+    if(val === 'yd') lbl.textContent = t.yardas_total;
+    if(val === 'cm') lbl.textContent = t.centimetros_total;
+    if(val === 'un') lbl.textContent = t.unidades_total;
+  }
+
+  $('btnAddMat').addEventListener('click', () => {
+    const name = $('new_mat_name').value || 'Material';
+    const g = parseFloat($('new_mat_g').value.replace(',','.')) || 0;
+    const unit = $('new_mat_unit').value; 
+    const price = parseFloat($('new_mat_price').value.replace(',','.')) || 0;
+    const weight = parseFloat($('new_mat_weight').value.replace(',','.')) || 100;
+
+    if(g <= 0) return alert('Ingresa la cantidad usada');
+
+    // Cost
+    const cost = (price / weight) * g;
+    
+    const gDisp = Number.isInteger(g) ? g : g.toFixed(2).replace('.', ',');
+    const wDisp = Number.isInteger(weight) ? weight : weight.toFixed(2).replace('.', ',');
+
+    state.materials.push({ name, g, unit, cost, desc: `${gDisp}${unit} (${fmt(price)}/${wDisp})` });
+    
+    $('new_mat_name').value = '';
+    $('new_mat_g').value = '';
+    
+    renderMatList();
+    recalc();
+  });
+
+  function renderMatList(){
+    const list = $('matList');
+    list.innerHTML = '';
+    state.materials.forEach((m, idx) => {
+      const div = document.createElement('div');
+      div.className = 'mat-item';
+      div.innerHTML = `
+        <div style="flex:1"><b>${m.name}</b> <span style="color:#777;font-size:0.8em">${m.desc}</span></div>
+        <div style="font-weight:600">${fmt(m.cost)}</div>
+        <button class="mat-del" onclick="delMat(${idx})">×</button>
+      `;
+      list.appendChild(div);
+    });
+  }
+  window.delMat = (idx) => { state.materials.splice(idx, 1); renderMatList(); recalc(); };
+
+  // --- EXTRAS (EDITABLE) ---
+  $('btnAddExtra').addEventListener('click', () => {
+    // Read from input, not select
+    const type = $('new_extra_type').value || 'Varios';
+    const cost = parseFloat($('new_extra_cost').value) || 0;
+
+    if(cost <= 0) return alert('Ingresa el costo del gasto');
+
+    state.extrasList.push({ name: type, cost: cost });
+    
+    $('new_extra_cost').value = '';
+    $('new_extra_type').value = ''; // Clear text input
+    
+    renderExtraList();
+    recalc();
+  });
+
+  function renderExtraList(){
+    const list = $('extraList');
+    list.innerHTML = '';
+    state.extrasList.forEach((e, idx) => {
+      const div = document.createElement('div');
+      div.className = 'mat-item';
+      div.innerHTML = `
+        <div style="flex:1"><b>${e.name}</b></div>
+        <div style="font-weight:600">${fmt(e.cost)}</div>
+        <button class="mat-del" onclick="delExtra(${idx})">×</button>
+      `;
+      list.appendChild(div);
+    });
+  }
+  window.delExtra = (idx) => { state.extrasList.splice(idx, 1); renderExtraList(); recalc(); };
+
+  // --- BASIC EVENTS ---
+  ['inp_horas','inp_min'].forEach(id => {
+    $(id).addEventListener('input', (e) => {
+      const v = parseFloat(e.target.value) || 0;
+      if(id === 'inp_horas') state.horas = v;
+      if(id === 'inp_min') state.min = v;
+      recalc();
+    });
+  });
+
+  // Config Toggle
+  function toggleConfig(){
+    const p = $('configPanel');
+    p.style.display = p.style.display === 'none' ? 'block' : 'none';
+  }
+  $('btnConfig').addEventListener('click', toggleConfig);
+  $('btnCloseConfig').addEventListener('click', toggleConfig);
+  
+  // Install Modal
+  $('btnInstall').addEventListener('click', () => $('installModal').classList.add('active'));
+  $('btnCloseInstall').addEventListener('click', () => $('installModal').classList.remove('active'));
+
+  ['cfg_moneda', 'cfg_hora'].forEach(id => {
+    $(id).addEventListener('input', () => {
+      state.moneda = $('cfg_moneda').value;
+      state.hora = parseFloat($('cfg_hora').value) || 0;
+      saveCfg();
+      recalc();
+      renderMatList(); 
+      renderExtraList();
+    });
+  });
+  
+  $('btnLang').addEventListener('click', () => {
+    const newLang = state.lang === 'es' ? 'en' : 'es';
+    state.lang = newLang; 
+    saveCfg(); 
+    location.reload(); // Simple reload to apply all texts (since I removed detailed applyLanguage to save space)
+  });
+
+  $('btnDarkMode').addEventListener('click', () => {
+    state.darkMode = !state.darkMode;
+    document.body.classList.toggle('dark-mode');
+    $('btnDarkMode').textContent = state.darkMode ? '☀️' : '🌙';
+    saveCfg();
+  });
+
+  function saveCfg(){
+    localStorage.setItem('ac_calc_cfg', JSON.stringify({
+      moneda: state.moneda,
+      hora: state.hora,
+      isPro: state.isPro,
+      lang: state.lang,
+      darkMode: state.darkMode
+    }));
+  }
+
+  // --- TIMER ---
+  $('btnTimer').addEventListener('click', toggleTimer);
+  $('btnFinishTimer').addEventListener('click', finishTimer);
+
+  function toggleTimer() {
+    const t = translations[state.lang] || translations['es'];
+    if (state.timerInterval) {
+      clearInterval(state.timerInterval);
+      state.timerInterval = null;
+      state.elapsedMs += Date.now() - state.timerStart;
+      $('btnTimer').textContent = t.reanudar_tiempo;
+      $('btnFinishTimer').style.display = 'inline-block';
+    } else {
+      state.timerStart = Date.now();
+      state.timerInterval = setInterval(onTick, 1000);
+      $('btnTimer').textContent = t.pausar_tiempo;
+      $('btnFinishTimer').style.display = 'none';
+    }
+  }
+  
+  function finishTimer() {
+    if(state.timerInterval) {
+      clearInterval(state.timerInterval);
+      state.elapsedMs += Date.now() - state.timerStart;
+    }
+    const totalSeconds = Math.floor(state.elapsedMs / 1000);
+    const h = Math.floor(totalSeconds / 3600);
+    const m = Math.floor((totalSeconds % 3600) / 60);
+    state.horas = h;
+    state.min = m;
+    $('inp_horas').value = h;
+    $('inp_min').value = m;
+    recalc();
+    state.elapsedMs = 0;
+    state.timerInterval = null;
+    $('timerDisplay').textContent = "00:00:00";
+    $('btnTimer').textContent = translations[state.lang].iniciar_tiempo;
+    $('btnFinishTimer').style.display = 'none';
+  }
+
+  function onTick() {
+    const now = Date.now();
+    const totalMs = state.elapsedMs + (now - state.timerStart);
+    const s = Math.floor(totalMs / 1000) % 60;
+    const m = Math.floor(totalMs / 60000) % 60;
+    const h = Math.floor(totalMs / 3600000);
+    $('timerDisplay').textContent = `${pad(h)}:${pad(m)}:${pad(s)}`;
+  }
+  function pad(n) { return n.toString().padStart(2, '0'); }
+
+  // --- PRO LOGIC ---
+  const modal = $('unlockModal');
+  $('btnUnlockTrigger').addEventListener('click', () => {
+    modal.classList.add('active');
+    $('deviceToken').textContent = localStorage.getItem('ac_device_id') || 'DEV-XYZ';
+  });
+  $('btnCloseModal').addEventListener('click', () => modal.classList.remove('active'));
+  $('btnVerifyCode').addEventListener('click', () => {
+    unlockUI();
+    modal.classList.remove('active');
+    alert("🎉 ¡Versión PRO activada!");
+  });
+
+  function unlockUI(){
+    state.isPro = true;
+    saveCfg();
+    $('proSection').classList.remove('pro-locked');
+    $('proOverlay').style.display = 'none';
+    loadSavedProjects();
+    loadLibrary();
+    $('quickLibSection').style.display = 'block';
+  }
+
+  // --- LIBRARY ---
+  function loadLibrary(){
+    const saved = localStorage.getItem('ac_library');
+    state.library = saved ? JSON.parse(saved) : [];
+    renderLibrary();
+    updateQuickSelect();
+  }
+  function saveLibrary(){
+    localStorage.setItem('ac_library', JSON.stringify(state.library));
+    renderLibrary();
+    updateQuickSelect();
+  }
+  $('libAddBtn').addEventListener('click', () => {
+    const name = $('lib_name').value;
+    const price = parseFloat($('lib_price').value);
+    const unit = parseFloat($('lib_unit').value) || 1;
+    const unitType = $('lib_unit_type').value; 
+    const stock = $('lib_stock').value;
+    if(!name || isNaN(price)) return alert('Completa nombre y precio');
+    state.library.push({ id: Date.now(), name, price, unit, unitType, stock });
+    $('lib_name').value = '';
+    $('lib_price').value = '';
+    $('lib_stock').value = '';
+    saveLibrary();
+    alert('Material guardado en biblioteca');
+  });
+  function renderLibrary(){
+    const c = $('libraryList');
+    c.innerHTML = '';
+    state.library.forEach(item => {
+      const div = document.createElement('div');
+      div.style.cssText = 'display:flex; justify-content:space-between; align-items:center; padding:10px; border-bottom:1px solid #eee; background:#fff';
+      const uType = item.unitType || 'un';
+      const stockTxt = item.stock ? `<span style="font-size:0.8em; color:var(--primary); background:#f3e8ff; padding:2px 6px; border-radius:4px">Stock: ${item.stock}</span>` : '';
+      div.innerHTML = `
+        <div>
+          <div style="font-weight:700">${item.name}</div>
+          <div style="font-size:0.85em; color:#666">$${item.price} / ${item.unit} ${uType} ${stockTxt}</div>
+        </div>
+        <div style="display:flex; gap:8px">
+          <button style="border:1px solid #ddd; background:#fff; border-radius:6px; cursor:pointer" onclick="editLib(${item.id})">✏️</button>
+          <button style="border:1px solid #fee2e2; background:#fff1f2; color:#b91c1c; border-radius:6px; cursor:pointer" onclick="delLib(${item.id})">🗑️</button>
+        </div>
+      `;
+      c.appendChild(div);
+    });
+  }
+  window.delLib = (id) => { if(confirm('¿Borrar?')) { state.library = state.library.filter(x => x.id !== id); saveLibrary(); } };
+  window.editLib = (id) => {
+    const item = state.library.find(x => x.id === id);
+    if(!item) return;
+    const newPrice = prompt(`Editar precio de ${item.name}:`, item.price);
+    if(newPrice !== null){
+       item.price = parseFloat(newPrice) || item.price;
+       const newStock = prompt(`Editar Stock (actual: ${item.stock || '-'}):`, item.stock || '');
+       if(newStock !== null) item.stock = newStock;
+       saveLibrary();
+    }
+  };
+  function updateQuickSelect(){
+    const sel = $('quickLibSelect');
+    sel.innerHTML = '<option value="">-- Elegir de Biblioteca --</option>';
+    state.library.forEach(item => {
+      const opt = document.createElement('option');
+      opt.value = item.id;
+      opt.textContent = `${item.name} ($${item.price})`;
+      sel.appendChild(opt);
+    });
+  }
+  $('btnQuickAdd').addEventListener('click', () => {
+    const id = parseInt($('quickLibSelect').value);
+    const item = state.library.find(x => x.id === id);
+    if(item){
+      $('new_mat_name').value = item.name;
+      $('new_mat_price').value = item.price;
+      $('new_mat_weight').value = item.unit;
+      $('new_mat_g').focus();
+    }
+  });
+
+  // --- CARD GEN ---
+  $('btnGenCard').addEventListener('click', () => {
+    $('budgetModal').classList.add('active');
+    $('cardTitle').textContent = $('pro_name').value || 'Mi Proyecto';
+    $('cardClient').textContent = $('pro_client').value ? `Cliente: ${$('pro_client').value}` : '';
+    
+    // Use the total displayed price (Quantity included)
+    $('cardPrice').textContent = $('res_venta').textContent;
+    
+    // Breakdown logic
+    const unitPrice = $('res_unit').textContent || ''; // "Unitario: $ 1.000"
+    const q = state.quantity;
+    if(q > 1 && unitPrice) {
+       // Extract just the amount
+       $('cardBreakdown').textContent = `${q} unidades x ${unitPrice.replace('Unitario: ', '')} = Total`;
+    } else {
+       $('cardBreakdown').textContent = '';
+    }
+    
+    // Deposit calculation logic
+    const priceStr = $('res_venta').textContent;
+    let priceVal = 0;
+    if(priceStr){
+       const raw = priceStr.replace(/[^0-9,]/g, '').replace(',', '.');
+       priceVal = parseFloat(raw) || 0;
+    }
+    const deposit = priceVal / 2;
+    const t = translations[state.lang] || translations['es'];
+    $('cardDeposit').textContent = `${t.sena_reserva}: ${fmt(deposit)}`;
+  });
+  $('btnCloseCard').addEventListener('click', () => $('budgetModal').classList.remove('active'));
+
+  $('userLogoArea').addEventListener('click', () => $('inpUserLogo').click());
+  $('inpUserLogo').addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if(file){
+      const reader = new FileReader();
+      reader.onload = (ev) => $('userLogoImg').src = ev.target.result;
+      reader.readAsDataURL(file);
+    }
+  });
+  $('btnDownloadCard').addEventListener('click', () => {
+    const btn = $('btnDownloadCard');
+    btn.textContent = '⏳ ...';
+    html2canvas($('budgetCard'), { scale: 2 }).then(canvas => {
+      const link = document.createElement('a');
+      link.download = `Presupuesto-${$('pro_name').value}.png`;
+      link.href = canvas.toDataURL();
+      link.click();
+      btn.textContent = '📸 Imagen';
+    });
+  });
+
+  $('btnDownloadPDF').addEventListener('click', () => {
+    const btn = $('btnDownloadPDF');
+    btn.textContent = '⏳ ...';
+    
+    html2canvas($('budgetCard'), { scale: 2 }).then(canvas => {
+      const imgData = canvas.toDataURL('image/png');
+      const { jsPDF } = window.jspdf;
+      
+      // Calculate aspect ratio
+      const imgWidth = 210; // A4 width in mm
+      const pageHeight = 297; 
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      
+      const doc = new jsPDF('p', 'mm', 'a4');
+      // Center vertically if possible or just top
+      const y = (imgHeight < pageHeight) ? (pageHeight - imgHeight) / 2 : 0;
+      
+      doc.addImage(imgData, 'PNG', 0, y, imgWidth, imgHeight);
+      doc.save(`Presupuesto-${$('pro_name').value}.pdf`);
+      
+      btn.textContent = '📄 PDF';
+    }).catch(err => {
+      alert("Error: " + err);
+      btn.textContent = '📄 PDF';
+    });
+  });
+
+  // --- PROJECT MANAGEMENT ---
+  $('btnSave').addEventListener('click', () => saveProject(false));
+  $('btnUpdate').addEventListener('click', () => { if(state.currentProjectId) saveProject(true); });
+
+  function saveProject(isUpdate){
+    const name = $('pro_name').value || 'Sin nombre';
+    const client = $('pro_client').value;
+    
+    const project = {
+      id: isUpdate ? state.currentProjectId : Date.now(),
+      name,
+      client,
+      status: state.status,
+      quantity: state.quantity,
+      margen: state.margen,
+      materials: state.materials,
+      extrasList: state.extrasList,
+      horas: state.horas,
+      min: state.min,
+      date: new Date().toLocaleDateString()
+    };
+    
+    let saved = JSON.parse(localStorage.getItem('ac_projects') || '[]');
+    if(isUpdate){
+        const idx = saved.findIndex(p => p.id === state.currentProjectId);
+        if(idx !== -1) saved[idx] = project;
+        else saved.unshift(project);
+    } else {
+        saved.unshift(project);
+        state.currentProjectId = project.id;
+        updateSaveButtonsMode();
+    }
+    localStorage.setItem('ac_projects', JSON.stringify(saved));
+    loadSavedProjects();
+    alert('Proyecto guardado ✓');
+  }
+
+  function loadSavedProjects(){
+    const saved = JSON.parse(localStorage.getItem('ac_projects') || '[]');
+    const c = $('projectsContainer');
+    c.innerHTML = '';
+    if(saved.length === 0) c.innerHTML = '<div style="font-size:0.8rem;color:#999">No hay proyectos.</div>';
+    
+    saved.forEach(p => {
+      const div = document.createElement('div');
+      div.style.cssText = 'background:#f9f9f9; padding:10px; border-radius:8px; display:flex; justify-content:space-between; align-items:center; border:1px solid #eee';
+      
+      let badgeStyle = 'background:#fee2e2; color:#991b1b'; 
+      if(p.status === 'Señado') badgeStyle = 'background:#fef08a; color:#854d0e'; 
+      if(p.status === 'Entregado') badgeStyle = 'background:#dcfce7; color:#166534';
+      
+      const statusBadge = p.status ? `<span style="font-size:0.7rem; ${badgeStyle}; padding:2px 6px; border-radius:4px; margin-left:6px; font-weight:600">${p.status}</span>` : '';
+      const clientTxt = p.client ? `<div style="font-size:0.75rem; color:#666">👤 ${p.client}</div>` : '';
+
+      div.innerHTML = `
+        <div style="overflow:hidden">
+          <div style="font-weight:700;font-size:0.9rem;">${p.name} ${statusBadge}</div>
+          ${clientTxt}
+          <div style="font-size:0.75rem;color:#777">${p.date}</div>
+        </div>
+        <div style="display:flex; gap:5px">
+            <button style="background:#fff;border:1px solid #ddd;padding:4px 8px;border-radius:6px;cursor:pointer" title="Editar" onclick="loadProj(${p.id})">✏️</button>
+            <button style="background:#fff;border:1px solid #ddd;color:#555;padding:4px 8px;border-radius:6px;cursor:pointer" title="Duplicar" onclick="duplicateProject(${p.id})">📄</button>
+            <button style="background:#fff;border:1px solid #bfdbfe;color:#1d4ed8;padding:4px 8px;border-radius:6px;cursor:pointer" title="Exportar JSON" onclick="exportProject(${p.id})">💾</button>
+            <button style="background:#fee2e2;border:1px solid #fecaca;color:#b91c1c;padding:4px 8px;border-radius:6px;cursor:pointer" title="Borrar" onclick="deleteProject(${p.id})">🗑️</button>
+        </div>
+      `;
+      c.appendChild(div);
+    });
+  }
+  
+  window.duplicateProject = (id) => {
+    const saved = JSON.parse(localStorage.getItem('ac_projects') || '[]');
+    const p = saved.find(x => x.id === id);
+    if(!p) return;
+    
+    // Deep copy
+    const copy = JSON.parse(JSON.stringify(p));
+    copy.id = Date.now();
+    copy.name = copy.name + " (Copia)";
+    copy.date = new Date().toLocaleDateString();
+    
+    saved.unshift(copy);
+    localStorage.setItem('ac_projects', JSON.stringify(saved));
+    loadSavedProjects();
+    alert("Proyecto duplicado ✓");
+  };
+
+  window.deleteProject = (id) => {
+    if(!confirm("¿Eliminar?")) return;
+    let saved = JSON.parse(localStorage.getItem('ac_projects') || '[]');
+    saved = saved.filter(p => p.id !== id);
+    localStorage.setItem('ac_projects', JSON.stringify(saved));
+    if(state.currentProjectId === id) clearProject();
+    loadSavedProjects();
+  };
+
+  window.loadProj = (id) => {
+    const saved = JSON.parse(localStorage.getItem('ac_projects') || '[]');
+    const p = saved.find(x => x.id === id);
+    if(p){
+      $('pro_name').value = p.name;
+      $('pro_client').value = p.client || '';
+      
+      state.status = p.status || 'Pendiente';
+      updateStatusUI();
+
+      state.quantity = p.quantity || 1;
+      $('inp_quantity').value = state.quantity;
+      
+      state.margen = p.margen || 1.5;
+      updateMarginUI();
+
+      state.materials = p.materials || [];
+      state.extrasList = p.extrasList || [];
+      state.horas = p.horas || 0;
+      state.min = p.min || 0;
+      
+      state.currentProjectId = p.id;
+      updateSaveButtonsMode();
+      
+      $('inp_horas').value = state.horas;
+      $('inp_min').value = state.min;
+      
+      renderMatList();
+      renderExtraList();
+      recalc();
+      window.scrollTo({top:0, behavior:'smooth'});
+    }
+  };
+  
+  window.clearProject = () => {
+      state.currentProjectId = null;
+      updateSaveButtonsMode();
+      
+      $('pro_name').value = '';
+      $('pro_client').value = '';
+      state.status = 'Pendiente';
+      updateStatusUI();
+      
+      state.quantity = 1;
+      $('inp_quantity').value = 1;
+      
+      state.materials = [];
+      state.extrasList = [];
+      state.horas = 0;
+      state.min = 0;
+      $('inp_horas').value = 0;
+      $('inp_min').value = 0;
+      
+      renderMatList();
+      renderExtraList();
+      recalc();
+  };
+  
+  function updateSaveButtonsMode(){
+      if(state.currentProjectId){
+          $('btnSave').style.display = 'none'; 
+          $('btnUpdate').style.display = 'inline-block'; 
+          $('btnClearProj').style.display = 'block';
+      } else {
+          $('btnSave').style.display = 'inline-block';
+          $('btnUpdate').style.display = 'none';
+          $('btnClearProj').style.display = 'none';
+      }
+  }
+
+  $('btnExport').addEventListener('click', () => {
+     if(confirm("¿Imprimir/Guardar PDF?")) window.print();
+  });
+
+  // --- IMPORT / EXPORT JSON ---
+  window.exportProject = (id) => {
+    const saved = JSON.parse(localStorage.getItem('ac_projects') || '[]');
+    const p = saved.find(x => x.id === id);
+    if(!p) return;
+    
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(p, null, 2));
+    const downloadAnchorNode = document.createElement('a');
+    downloadAnchorNode.setAttribute("href", dataStr);
+    downloadAnchorNode.setAttribute("download", `${p.name.replace(/\s+/g,'_')}.json`);
+    document.body.appendChild(downloadAnchorNode);
+    downloadAnchorNode.click();
+    downloadAnchorNode.remove();
+  };
+
+  $('btnImportJSON').addEventListener('click', () => {
+    $('inpImportFile').click();
+  });
+
+  $('inpImportFile').addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if(!file) return;
+    
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const p = JSON.parse(event.target.result);
+        if(!p.name || !p.materials) throw new Error("Formato inválido");
+        
+        // Asignar nuevo ID para evitar colisiones
+        p.id = Date.now();
+        p.name = p.name + " (Importado)";
+        
+        let saved = JSON.parse(localStorage.getItem('ac_projects') || '[]');
+        saved.unshift(p);
+        localStorage.setItem('ac_projects', JSON.stringify(saved));
+        loadSavedProjects();
+        alert(`Proyecto "${p.name}" importado con éxito.`);
+      } catch(err) {
+        alert("Error al importar: " + err.message);
+      }
+      $('inpImportFile').value = ''; // Reset
+    };
+    reader.readAsText(file);
+  });
+
+  // --- IMPORT / EXPORT LIBRARY ---
+  window.exportLibrary = () => {
+    const lib = localStorage.getItem('ac_library') || '[]';
+    if(lib === '[]') return alert("La biblioteca está vacía.");
+    
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(lib);
+    const downloadAnchorNode = document.createElement('a');
+    downloadAnchorNode.setAttribute("href", dataStr);
+    downloadAnchorNode.setAttribute("download", "Biblioteca_Materiales.json");
+    document.body.appendChild(downloadAnchorNode);
+    downloadAnchorNode.click();
+    downloadAnchorNode.remove();
+  };
+
+  $('btnImportLib').addEventListener('click', () => $('inpImportLib').click());
+  
+  $('inpImportLib').addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if(!file) return;
+    
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const imported = JSON.parse(event.target.result);
+        if(!Array.isArray(imported)) throw new Error("Formato inválido (debe ser una lista)");
+        
+        // Merge strategy: Add new items, generating new IDs to avoid collision
+        let count = 0;
+        imported.forEach(item => {
+           // Simple check: validate name and price exist
+           if(item.name && item.price !== undefined){
+              item.id = Date.now() + Math.floor(Math.random()*1000); // New ID
+              state.library.push(item);
+              count++;
+           }
+        });
+        
+        saveLibrary();
+        alert(`Se importaron ${count} materiales a la biblioteca.`);
+      } catch(err) {
+        alert("Error al importar biblioteca: " + err.message);
+      }
+      $('inpImportLib').value = ''; // Reset
+    };
+    reader.readAsText(file);
+  });
+
+  window.setMarginTo = (val, type) => {
+    state.margen = val;
+    updateMarginUI();
+    recalc();
+    // highlight selected box
+    const boxes = document.querySelectorAll('.res-box');
+    boxes.forEach(b => b.style.borderColor = 'var(--border)'); // reset
+    if(type === 'min') $('res_min').parentElement.style.borderColor = 'var(--primary)';
+    if(type === 'mayor') $('res_mayor').parentElement.style.borderColor = 'var(--primary)';
+  };
+  window.openProTab = (tabId) => {
+    document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+    $(tabId).classList.add('active');
+    const btns = document.querySelectorAll('.tab-btn');
+    if(tabId === 'tabProject') btns[0].classList.add('active');
+    if(tabId === 'tabLibrary') btns[1].classList.add('active');
+    if(tabId === 'tabBudget')  btns[2].classList.add('active');
+  };
+function abrirConversor() { document.getElementById('modalConversor').classList.add('active'); }
+  function cerrarConversor() { document.getElementById('modalConversor').classList.remove('active'); }
+  function aplicarConversion() {
+    const p = parseFloat(document.getElementById('conv_precio').value);
+    const c = parseFloat(document.getElementById('conv_total').value);
+    const t = document.getElementById('conv_unidad').value;
+    if (isNaN(p) || isNaN(c) || c <= 0) return alert("Completá los datos");
+    let f = (t === 'metro_a_cm') ? 100 : 1000;
+    document.getElementById('lib_price').value = p.toFixed(2);
+    document.getElementById('lib_unit').value = (c * f).toFixed(2);
+    document.getElementById('lib_unit_type').value = (t === 'metro_a_cm') ? 'cm' : 'g';
+    cerrarConversor();
+  }
+  init();
+
+</script>
+<div id="modalConversor" class="modal">
+  <div class="modal-card">
+    <h3 style="color:var(--primary-dark)">Calculadora de Insumos 📏</h3>
+    <p style="font-size:0.9rem; color:var(--text-light)">Cargá aquí lo que pagaste por el total (metro/kilo) y Jules lo pasa a tu stock.</p>
+    
+    <div class="form-group" style="text-align:left">
+      <label>¿Cómo compraste el material?</label>
+      <select id="conv_unidad">
+        <option value="metro_a_cm">Compré por METRO y uso CM</option>
+        <option value="kilo_a_gramo">Compré por KILO y uso GRAMOS</option>
+      </select>
+    </div>
+
+    <div class="row">
+      <div style="text-align:left">
+        <label>Precio Pagado ($)</label>
+        <input id="conv_precio" type="number" placeholder="Ej: 5000">
+      </div>
+      <div style="text-align:left">
+        <label>Cantidad (Metros o Kilos)</label>
+        <input id="conv_total" type="number" placeholder="Ej: 2">
+      </div>
+    </div>
+
+    <div style="margin-top:20px" class="row">
+      <button type="button" onclick="cerrarConversor()" class="btn btn-outline">Cerrar</button>
+      <button type="button" onclick="aplicarConversion()" class="btn btn-primary">¡Listo!</button>
+    </div>
+  </div>
+</div>
+</body>
+</html>
