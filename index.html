@@ -145,7 +145,7 @@
       margin-bottom: 6px;
       color: var(--text);
     }
-    input[type="number"], input[type="text"], select {
+    input[type="number"], input[type="text"], input[type="tel"], input[type="email"], textarea, select {
       width: 100%;
       padding: 12px;
       border-radius: 10px;
@@ -155,7 +155,11 @@
       color: var(--text);
       transition: 0.2s;
     }
-    input:focus {
+    textarea {
+      font-family: var(--font-main);
+      resize: vertical;
+    }
+    input:focus, textarea:focus {
       border-color: var(--secondary);
       background: #fff;
     }
@@ -372,10 +376,15 @@
       --secondary: #4a4a6a; 
     }
     body.dark-mode input, 
+    body.dark-mode textarea,
     body.dark-mode select {
       background: #1e1e2e;
       color: #e0e0e0;
       border-color: #4a4a6a;
+    }
+    body.dark-mode .form-group > div > div[style*="background:#f9f9f9"] {
+      background: #2d2d44 !important;
+      border-color: #4a4a6a !important;
     }
     body.dark-mode .res-box.main {
       background: #3a3a5e;
@@ -669,11 +678,20 @@
       </div>
 
       <div class="form-group">
-        <label>Nombre del Proyecto</label>
+        <label>Proyecto y Ficha de Cliente</label>
         <div style="display:flex; flex-direction:column; gap:10px; margin-bottom:10px">
-          <div style="display:flex; gap:10px">
-            <input id="pro_name" type="text" placeholder="Ej: Manta Granny Square" style="flex:1">
-            <input id="pro_client" type="text" placeholder="Cliente (Opcional)" style="flex:1">
+          <input id="pro_name" type="text" placeholder="Nombre del Proyecto (Ej: Manta Granny Square)">
+
+          <div style="background:#f9f9f9; padding:15px; border-radius:10px; border:1px solid #eee">
+            <label style="margin-top:0; color:var(--primary-dark)">Ficha de Cliente (Opcional)</label>
+            <div style="display:flex; flex-direction:column; gap:10px">
+              <input id="pro_client" type="text" placeholder="Nombre completo">
+              <div style="display:flex; gap:10px">
+                <input id="pro_client_phone" type="tel" placeholder="Teléfono" style="flex:1">
+                <input id="pro_client_email" type="email" placeholder="Email" style="flex:1">
+              </div>
+              <textarea id="pro_client_details" placeholder="Detalle del pedido..." rows="2"></textarea>
+            </div>
           </div>
           
           <div style="display:flex; gap:10px; align-items:center; background:#f9f9f9; padding:8px; border-radius:10px; border:1px solid #eee">
@@ -813,7 +831,9 @@
           <div id="cardDeposit" style="font-size:0.9rem; color:var(--primary); margin-top:5px; font-weight:600"></div>
         </div>
         
-        <div id="cardClient" style="text-align:center; font-weight:700; margin-bottom:10px; color:#555"></div>
+        <div id="cardClient" style="text-align:center; font-weight:700; color:#555"></div>
+        <div id="cardClientInfo" style="text-align:center; font-size:0.8rem; color:#777; margin-bottom:5px"></div>
+        <div id="cardClientDetails" style="text-align:center; font-size:0.85rem; color:#555; font-style:italic; margin-bottom:10px"></div>
 
         <!-- Notas editables -->
         <div contenteditable="true" style="font-size:0.85rem; color:#666; background:#f9f9f9; padding:10px; border-radius:8px; border:1px dashed #ddd; outline:none">
@@ -1415,7 +1435,20 @@
   $('btnGenCard').addEventListener('click', () => {
     $('budgetModal').classList.add('active');
     $('cardTitle').textContent = $('pro_name').value || 'Mi Proyecto';
-    $('cardClient').textContent = $('pro_client').value ? `Cliente: ${$('pro_client').value}` : '';
+
+    const cName = $('pro_client').value;
+    const cPhone = $('pro_client_phone').value;
+    const cEmail = $('pro_client_email').value;
+    const cDetails = $('pro_client_details').value;
+
+    $('cardClient').textContent = cName ? `Cliente: ${cName}` : '';
+
+    let infoArr = [];
+    if(cPhone) infoArr.push(`📞 ${cPhone}`);
+    if(cEmail) infoArr.push(`✉️ ${cEmail}`);
+    $('cardClientInfo').textContent = infoArr.join(' | ');
+
+    $('cardClientDetails').textContent = cDetails ? `"${cDetails}"` : '';
     
     // Use the total displayed price (Quantity included)
     $('cardPrice').textContent = $('res_venta').textContent;
@@ -1498,11 +1531,17 @@
   function saveProject(isUpdate){
     const name = $('pro_name').value || 'Sin nombre';
     const client = $('pro_client').value;
+    const client_phone = $('pro_client_phone').value;
+    const client_email = $('pro_client_email').value;
+    const client_details = $('pro_client_details').value;
     
     const project = {
       id: isUpdate ? state.currentProjectId : Date.now(),
       name,
       client,
+      client_phone,
+      client_email,
+      client_details,
       status: state.status,
       quantity: state.quantity,
       margen: state.margen,
@@ -1524,6 +1563,15 @@
         updateSaveButtonsMode();
     }
     localStorage.setItem('ac_projects', JSON.stringify(saved));
+
+    // Save to Firebase async if available
+    if(window.db && window.firestoreMod) {
+      window.firestoreMod.setDoc(
+        window.firestoreMod.doc(window.db, "proyectos", project.id.toString()),
+        project
+      ).catch(err => console.error("Error saving to Firebase:", err));
+    }
+
     loadSavedProjects();
     alert('Proyecto guardado ✓');
   }
@@ -1594,6 +1642,9 @@
     if(p){
       $('pro_name').value = p.name;
       $('pro_client').value = p.client || '';
+      $('pro_client_phone').value = p.client_phone || '';
+      $('pro_client_email').value = p.client_email || '';
+      $('pro_client_details').value = p.client_details || '';
       
       state.status = p.status || 'Pendiente';
       updateStatusUI();
@@ -1628,6 +1679,9 @@
       
       $('pro_name').value = '';
       $('pro_client').value = '';
+      $('pro_client_phone').value = '';
+      $('pro_client_email').value = '';
+      $('pro_client_details').value = '';
       state.status = 'Pendiente';
       updateStatusUI();
       
@@ -1799,7 +1853,12 @@ function abrirConversor() { document.getElementById('modalConversor').classList.
   };
 
   import("https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js").then((firebase) => {
-    firebase.initializeApp(firebaseConfig);
+    const app = firebase.initializeApp(firebaseConfig);
+    return import("https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js").then((firestoreMod) => {
+      window.firestoreMod = firestoreMod;
+      window.db = firestoreMod.getFirestore(app);
+      console.log("Firebase Firestore loaded");
+    });
   }).catch((error) => {
     console.error("Error loading Firebase:", error);
   });
