@@ -467,6 +467,8 @@
       <p>Calcula el valor justo de tus tejidos</p>
     </div>
     <div style="margin-left:auto; display:flex; gap:10px">
+      <button id="btnLogin" class="btn-outline" style="width:auto;padding:8px 12px;border-radius:8px" title="Ingresar">Ingresar</button>
+      <button id="btnLogout" class="btn-outline" style="width:auto;padding:8px 12px;border-radius:8px; display:none" title="Salir">Salir</button>
       <button id="btnLang" class="btn-outline" style="width:auto;padding:8px 12px;border-radius:8px" title="Cambiar Idioma">ES</button>
       <button id="btnDarkMode" class="btn-outline" style="width:auto;padding:8px 12px;border-radius:8px" title="Modo Oscuro">🌙</button>
       <button id="btnWakeLock" class="btn-outline" style="width:auto;padding:8px 12px;border-radius:8px" title="Pantalla Encendida">💡</button>
@@ -934,7 +936,68 @@
     darkMode: false,
     timerInterval: null,
     timerStart: 0,
-    elapsedMs: 0
+    elapsedMs: 0,
+    user: null
+  };
+
+  const Storage = {
+    data: { projects: [], library: [], cfg: {} },
+    getProjects() {
+      if (state.user) return this.data.projects;
+      return JSON.parse(localStorage.getItem('ac_projects') || '[]');
+    },
+    setProjects(p) {
+      if (state.user) {
+        this.data.projects = p;
+        if (window.db && window.firestoreMod) {
+          window.firestoreMod.setDoc(
+            window.firestoreMod.doc(window.db, "users", state.user.uid),
+            this.data,
+            { merge: true }
+          ).catch(e => console.error(e));
+        }
+      } else {
+        localStorage.setItem('ac_projects', JSON.stringify(p));
+      }
+    },
+    getLibrary() {
+      if (state.user) return this.data.library;
+      const saved = localStorage.getItem('ac_library');
+      return saved ? JSON.parse(saved) : [];
+    },
+    setLibrary(l) {
+      if (state.user) {
+        this.data.library = l;
+        if (window.db && window.firestoreMod) {
+          window.firestoreMod.setDoc(
+            window.firestoreMod.doc(window.db, "users", state.user.uid),
+            this.data,
+            { merge: true }
+          ).catch(e => console.error(e));
+        }
+      } else {
+        localStorage.setItem('ac_library', JSON.stringify(l));
+      }
+    },
+    getCfg() {
+      if (state.user) return this.data.cfg;
+      const saved = localStorage.getItem('ac_calc_cfg');
+      return saved ? JSON.parse(saved) : null;
+    },
+    setCfg(c) {
+      if (state.user) {
+        this.data.cfg = c;
+        if (window.db && window.firestoreMod) {
+          window.firestoreMod.setDoc(
+            window.firestoreMod.doc(window.db, "users", state.user.uid),
+            this.data,
+            { merge: true }
+          ).catch(e => console.error(e));
+        }
+      } else {
+        localStorage.setItem('ac_calc_cfg', JSON.stringify(c));
+      }
+    }
   };
 
   const marginOptions = [
@@ -987,9 +1050,9 @@
   const $ = id => document.getElementById(id);
 
   function init(){
-    const savedCfg = localStorage.getItem('ac_calc_cfg');
+    const savedCfg = Storage.getCfg();
     if(savedCfg){
-      const cfg = JSON.parse(savedCfg);
+      const cfg = savedCfg;
       state.moneda = cfg.moneda || '$';
       state.hora = cfg.hora || 1000;
       state.isPro = cfg.isPro || false;
@@ -1269,13 +1332,13 @@
   });
 
   function saveCfg(){
-    localStorage.setItem('ac_calc_cfg', JSON.stringify({
+    Storage.setCfg({
       moneda: state.moneda,
       hora: state.hora,
       isPro: state.isPro,
       lang: state.lang,
       darkMode: state.darkMode
-    }));
+    });
   }
 
   // --- TIMER ---
@@ -1353,13 +1416,12 @@
 
   // --- LIBRARY ---
   function loadLibrary(){
-    const saved = localStorage.getItem('ac_library');
-    state.library = saved ? JSON.parse(saved) : [];
+    state.library = Storage.getLibrary();
     renderLibrary();
     updateQuickSelect();
   }
   function saveLibrary(){
-    localStorage.setItem('ac_library', JSON.stringify(state.library));
+    Storage.setLibrary(state.library);
     renderLibrary();
     updateQuickSelect();
   }
@@ -1552,7 +1614,7 @@
       date: new Date().toLocaleDateString()
     };
     
-    let saved = JSON.parse(localStorage.getItem('ac_projects') || '[]');
+    let saved = Storage.getProjects();
     if(isUpdate){
         const idx = saved.findIndex(p => p.id === state.currentProjectId);
         if(idx !== -1) saved[idx] = project;
@@ -1562,22 +1624,15 @@
         state.currentProjectId = project.id;
         updateSaveButtonsMode();
     }
-    localStorage.setItem('ac_projects', JSON.stringify(saved));
+    Storage.setProjects(saved);
 
-    // Save to Firebase async if available
-    if(window.db && window.firestoreMod) {
-      window.firestoreMod.setDoc(
-        window.firestoreMod.doc(window.db, "proyectos", project.id.toString()),
-        project
-      ).catch(err => console.error("Error saving to Firebase:", err));
-    }
 
     loadSavedProjects();
     alert('Proyecto guardado ✓');
   }
 
   function loadSavedProjects(){
-    const saved = JSON.parse(localStorage.getItem('ac_projects') || '[]');
+    const saved = Storage.getProjects();
     const c = $('projectsContainer');
     c.innerHTML = '';
     if(saved.length === 0) c.innerHTML = '<div style="font-size:0.8rem;color:#999">No hay proyectos.</div>';
@@ -1611,7 +1666,7 @@
   }
   
   window.duplicateProject = (id) => {
-    const saved = JSON.parse(localStorage.getItem('ac_projects') || '[]');
+    const saved = Storage.getProjects();
     const p = saved.find(x => x.id === id);
     if(!p) return;
     
@@ -1622,22 +1677,22 @@
     copy.date = new Date().toLocaleDateString();
     
     saved.unshift(copy);
-    localStorage.setItem('ac_projects', JSON.stringify(saved));
+    Storage.setProjects(saved);
     loadSavedProjects();
     alert("Proyecto duplicado ✓");
   };
 
   window.deleteProject = (id) => {
     if(!confirm("¿Eliminar?")) return;
-    let saved = JSON.parse(localStorage.getItem('ac_projects') || '[]');
+    let saved = Storage.getProjects();
     saved = saved.filter(p => p.id !== id);
-    localStorage.setItem('ac_projects', JSON.stringify(saved));
+    Storage.setProjects(saved);
     if(state.currentProjectId === id) clearProject();
     loadSavedProjects();
   };
 
   window.loadProj = (id) => {
-    const saved = JSON.parse(localStorage.getItem('ac_projects') || '[]');
+    const saved = Storage.getProjects();
     const p = saved.find(x => x.id === id);
     if(p){
       $('pro_name').value = p.name;
@@ -1718,7 +1773,7 @@
 
   // --- IMPORT / EXPORT JSON ---
   window.exportProject = (id) => {
-    const saved = JSON.parse(localStorage.getItem('ac_projects') || '[]');
+    const saved = Storage.getProjects();
     const p = saved.find(x => x.id === id);
     if(!p) return;
     
@@ -1749,9 +1804,9 @@
         p.id = Date.now();
         p.name = p.name + " (Importado)";
         
-        let saved = JSON.parse(localStorage.getItem('ac_projects') || '[]');
+        let saved = Storage.getProjects();
         saved.unshift(p);
-        localStorage.setItem('ac_projects', JSON.stringify(saved));
+        Storage.setProjects(saved);
         loadSavedProjects();
         alert(`Proyecto "${p.name}" importado con éxito.`);
       } catch(err) {
@@ -1764,10 +1819,10 @@
 
   // --- IMPORT / EXPORT LIBRARY ---
   window.exportLibrary = () => {
-    const lib = localStorage.getItem('ac_library') || '[]';
-    if(lib === '[]') return alert("La biblioteca está vacía.");
+    const lib = Storage.getLibrary();
+    if(lib.length === 0) return alert("La biblioteca está vacía.");
     
-    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(lib);
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(lib));
     const downloadAnchorNode = document.createElement('a');
     downloadAnchorNode.setAttribute("href", dataStr);
     downloadAnchorNode.setAttribute("download", "Biblioteca_Materiales.json");
@@ -1852,13 +1907,110 @@ function abrirConversor() { document.getElementById('modalConversor').classList.
     appId: "1:1036575843503:web:0367665dad96d84ccd605a"
   };
 
-  import("https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js").then((firebase) => {
+  import("https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js").then(async (firebase) => {
     const app = firebase.initializeApp(firebaseConfig);
-    return import("https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js").then((firestoreMod) => {
-      window.firestoreMod = firestoreMod;
-      window.db = firestoreMod.getFirestore(app);
-      console.log("Firebase Firestore loaded");
+
+    const [firestoreMod, authMod] = await Promise.all([
+      import("https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js"),
+      import("https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js")
+    ]);
+
+    window.firestoreMod = firestoreMod;
+    window.db = firestoreMod.getFirestore(app);
+    const auth = authMod.getAuth(app);
+    window.auth = auth;
+
+    console.log("Firebase Firestore & Auth loaded");
+
+    // UI Listeners
+    $('btnLogin').addEventListener('click', () => {
+      const provider = new authMod.GoogleAuthProvider();
+      authMod.signInWithPopup(auth, provider).catch(err => console.error("Login error:", err));
     });
+
+    $('btnLogout').addEventListener('click', () => {
+      authMod.signOut(auth).then(() => {
+        state.user = null;
+        Storage.data = { projects: [], library: [], cfg: {} };
+        $('btnLogin').style.display = 'inline-block';
+        $('btnLogout').style.display = 'none';
+
+        // Switch back to local data view
+        init();
+        loadSavedProjects();
+        loadLibrary();
+      });
+    });
+
+    // Auth State Observer
+    authMod.onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        state.user = user;
+        $('btnLogin').style.display = 'none';
+        $('btnLogout').style.display = 'inline-block';
+
+        // 1. Fetch Cloud Data
+        let cloudData = { projects: [], library: [], cfg: {} };
+        try {
+          const docSnap = await firestoreMod.getDoc(firestoreMod.doc(window.db, "users", user.uid));
+          if (docSnap.exists()) {
+             cloudData = docSnap.data();
+             if(!cloudData.projects) cloudData.projects = [];
+             if(!cloudData.library) cloudData.library = [];
+             if(!cloudData.cfg) cloudData.cfg = {};
+          }
+        } catch (e) {
+          console.error("Error fetching cloud data", e);
+        }
+
+        // 2. Read Local Data
+        const localProjects = JSON.parse(localStorage.getItem('ac_projects') || '[]');
+        const localLibraryStr = localStorage.getItem('ac_library');
+        const localLibrary = localLibraryStr ? JSON.parse(localLibraryStr) : [];
+        const localCfgStr = localStorage.getItem('ac_calc_cfg');
+        const localCfg = localCfgStr ? JSON.parse(localCfgStr) : {};
+
+        // 3. Merge Logic
+        const mergeArraysById = (cloudArr, localArr) => {
+          const map = new Map();
+          cloudArr.forEach(item => map.set(item.id, item));
+          localArr.forEach(item => {
+            if (!map.has(item.id)) {
+               map.set(item.id, item);
+            }
+          });
+          return Array.from(map.values()).sort((a,b) => b.id - a.id);
+        };
+
+        const mergedProjects = mergeArraysById(cloudData.projects, localProjects);
+        const mergedLibrary = mergeArraysById(cloudData.library, localLibrary);
+        const mergedCfg = Object.assign({}, localCfg, cloudData.cfg);
+
+        // 4. Update memory & Cloud
+        Storage.data = {
+           projects: mergedProjects,
+           library: mergedLibrary,
+           cfg: mergedCfg
+        };
+
+        try {
+          await firestoreMod.setDoc(firestoreMod.doc(window.db, "users", user.uid), Storage.data, { merge: true });
+        } catch (e) {
+          console.error("Error saving merged data to cloud", e);
+        }
+
+        // 5. Clear Local Storage to ensure 100% sync
+        localStorage.removeItem('ac_projects');
+        localStorage.removeItem('ac_library');
+        localStorage.removeItem('ac_calc_cfg');
+
+        // 6. Refresh UI
+        init();
+        loadSavedProjects();
+        loadLibrary();
+      }
+    });
+
   }).catch((error) => {
     console.error("Error loading Firebase:", error);
   });
