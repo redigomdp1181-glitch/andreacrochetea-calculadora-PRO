@@ -69,15 +69,15 @@
     }
 
     .wrap {
-      width: 100%;
-      max-width: 600px;
-      margin: 0 auto;
+      width: 100vw;
       padding: 20px;
       position: relative;
       z-index: 1;
       flex: 1;
       display: flex;
       flex-direction: column;
+      box-sizing: border-box;
+      overflow-x: hidden;
     }
 
     /* Header */
@@ -128,6 +128,11 @@
       transition: transform 0.2s;
     }
     
+    .main-grid .card {
+      margin-bottom: 0;
+      height: 100%;
+    }
+
     .section-title {
       font-size: 1rem;
       font-weight: 700;
@@ -168,6 +173,20 @@
 
     .row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
     
+    /* Grid for Main Content */
+    .main-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 20px;
+      align-items: start;
+    }
+
+    @media (min-width: 900px) {
+      .main-grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+
     /* Result Boxes */
     .result-grid {
       display: grid;
@@ -465,6 +484,8 @@
     </div>
   </div>
 
+  <div class="main-grid">
+
   <!-- 1. MATERIALES -->
   <section class="card">
     <div class="section-title">
@@ -613,6 +634,8 @@
       </div>
     </div>
   </section>
+
+  </div> <!-- /main-grid -->
 
   <!-- SECCIÓN PROYECTOS / BIBLIOTECA -->
   <section id="proSection" class="card">
