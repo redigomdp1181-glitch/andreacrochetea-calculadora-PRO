@@ -76,6 +76,8 @@
       position: relative;
       z-index: 1;
       flex: 1;
+      display: flex;
+      flex-direction: column;
     }
 
     /* Header */
@@ -1851,7 +1853,7 @@ function abrirConversor() { document.getElementById('modalConversor').classList.
       if (user) {
         state.user = user;
         $('loginScreen').style.display = 'none';
-        $('appContent').style.display = 'flex';
+        $('appContent').style.display = '';
         $('btnLogout').style.display = 'inline-block';
 
         // 1. Fetch Cloud Data
