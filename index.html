@@ -256,52 +256,6 @@
     .st-yellow { background: var(--warning); }
     .st-green { background: var(--success); }
     
-    /* PRO Features */
-    .pro-locked {
-      position: relative;
-      /* No usamos pointer-events: none aquí porque bloquearía el Overlay hijo */
-      transition: 0.3s;
-    }
-    /* Se bloquean los inputs y botones internos, pero no el overlay */
-    .pro-locked .form-group, 
-    .pro-locked .row button,
-    .pro-locked .tabs,
-    .pro-locked .tab-content {
-      pointer-events: none;
-      opacity: 0.5;
-      filter: grayscale(1);
-    }
-
-    .pro-badge {
-      position: absolute;
-      top: -10px; right: -10px;
-      background: var(--accent-gold);
-      color: #713f12;
-      font-size: 0.7rem;
-      font-weight: 800;
-      padding: 4px 8px;
-      border-radius: 20px;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-      z-index: 10;
-    }
-    
-    .pro-overlay {
-      position: absolute;
-      inset: 0;
-      background: rgba(255,255,255,0.6);
-      backdrop-filter: blur(2px);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      z-index: 5;
-      border-radius: var(--radius);
-      text-align: center;
-      padding: 20px;
-      pointer-events: auto; /* El overlay sí recibe clics */
-    }
-    .pro-overlay p { font-weight: 700; color: var(--primary-dark); margin-bottom: 10px; }
-    
     .btn-gold {
       background: linear-gradient(135deg, #fcd34d 0%, #fbbf24 100%);
       color: #78350f;
@@ -459,7 +413,17 @@
 </head>
 <body>
 
-<div class="wrap">
+<!-- Pantalla de Login -->
+<div id="loginScreen" style="display:none; flex-direction:column; justify-content:center; align-items:center; height:100vh; background:var(--bg); padding:20px; text-align:center;">
+  <img src="logo-192.png" onerror="this.style.display='none'" alt="Logo" style="width:100px; height:100px; border-radius:24px; margin-bottom:20px; box-shadow:0 10px 20px rgba(0,0,0,0.1)">
+  <h1 style="color:var(--primary-dark); font-size:1.8rem; margin:0 0 10px 0;">Calculadora de Precios</h1>
+  <p style="color:var(--text-light); max-width:80%; margin:0 0 30px 0;">Bienvenida. Ingresá para guardar tus proyectos en la nube y acceder a todas las funciones sin costo.</p>
+  <button id="btnBigLogin" class="btn btn-primary" style="width:auto; padding:15px 30px; font-size:1.1rem; box-shadow:0 8px 25px rgba(140, 122, 169, 0.4);">
+    <span style="font-size:1.2rem;">G</span> Entrar con Google
+  </button>
+</div>
+
+<div class="wrap" id="appContent" style="display:none">
   <header>
     <img src="logo-192.png" onerror="this.style.display='none'" class="logo-img" alt="Logo">
     <div class="titles">
@@ -467,7 +431,6 @@
       <p>Calcula el valor justo de tus tejidos</p>
     </div>
     <div style="margin-left:auto; display:flex; gap:10px">
-      <button id="btnLogin" class="btn-outline" style="width:auto;padding:8px 12px;border-radius:8px" title="Ingresar">Ingresar</button>
       <button id="btnLogout" class="btn-outline" style="width:auto;padding:8px 12px;border-radius:8px; display:none" title="Salir">Salir</button>
       <button id="btnLang" class="btn-outline" style="width:auto;padding:8px 12px;border-radius:8px" title="Cambiar Idioma">ES</button>
       <button id="btnDarkMode" class="btn-outline" style="width:auto;padding:8px 12px;border-radius:8px" title="Modo Oscuro">🌙</button>
@@ -542,9 +505,9 @@
       </div>
       <button id="btnAddMat" class="btn btn-outline" style="margin-top:10px; font-size:0.9rem">+ Agregar Material</button>
       
-      <!-- Biblioteca rápida (PRO) -->
-      <div id="quickLibSection" style="margin-top:15px; display:none; border-top:1px dashed var(--border); padding-top:10px">
-        <label style="color:var(--primary)">📂 Cargar desde Biblioteca (PRO)</label>
+      <!-- Biblioteca rápida -->
+      <div id="quickLibSection" style="margin-top:15px; border-top:1px dashed var(--border); padding-top:10px">
+        <label style="color:var(--primary)">📂 Cargar desde Biblioteca</label>
         <div style="display:flex; gap:10px;">
           <select id="quickLibSelect" style="flex:1"></select>
           <button id="btnQuickAdd" class="btn-primary" style="width:auto; padding:0 15px; font-size:1.2rem; border-radius:10px">+</button>
@@ -649,22 +612,9 @@
     </div>
   </section>
 
-  <!-- SECCIÓN PRO (BLOQUEADA POR DEFECTO) -->
-  <section id="proSection" class="card pro-locked">
-    <div class="pro-badge">PRO</div>
-    
-    <!-- Bloqueo Overlay -->
-    <div id="proOverlay" class="pro-overlay">
-      <p>🔒 Funciones PRO</p>
-      <div style="font-size:0.85rem; color:var(--text-light); margin-bottom:15px; max-width:80%">
-        Guarda tus proyectos para no perderlos y exporta presupuestos profesionales.
-      </div>
-      <button id="btnUnlockTrigger" class="btn btn-gold" style="width:auto; padding:10px 24px; box-shadow:0 4px 12px rgba(251, 191, 36, 0.4)">
-        Desbloquear versión PRO
-      </button>
-    </div>
-
-    <!-- Contenido PRO -->
+  <!-- SECCIÓN PROYECTOS / BIBLIOTECA -->
+  <section id="proSection" class="card">
+    <!-- Contenido -->
     <div class="tabs">
       <button class="tab-btn active" onclick="openProTab('tabProject')">📂 Proyectos</button>
       <button class="tab-btn" onclick="openProTab('tabLibrary')">🧵 Biblioteca / Stock</button>
@@ -901,20 +851,6 @@
   </div>
 </div>
 
-<!-- MODAL DESBLOQUEO -->
-<div id="unlockModal" class="modal">
-  <div class="modal-card">
-    <h3>Desbloquear PRO 🔓</h3>
-    <p>Se ha detectado tu dispositivo.</p>
-    
-    <div style="background:#f3f4f6; padding:10px; border-radius:8px; margin-bottom:20px; font-family:monospace; font-size:1.2rem; letter-spacing:2px; color:var(--primary)">
-      <span id="deviceToken">GENERANDO...</span>
-    </div>
-
-    <button id="btnVerifyCode" class="btn btn-primary">Activar Prueba / Acceso</button>
-    <button id="btnCloseModal" style="background:transparent; border:none; color:var(--text-light); margin-top:15px; cursor:pointer; font-size:0.9rem">Cancelar</button>
-  </div>
-</div>
 
 <!-- Scripts -->
 <script>
@@ -931,7 +867,6 @@
     quantity: 1, // Nuevo: Cantidad de unidades
     status: 'Pendiente', // Nuevo: Status default
     currentProjectId: null,
-    isPro: false,
     lang: 'es',
     darkMode: false,
     timerInterval: null,
@@ -1055,7 +990,6 @@
       const cfg = savedCfg;
       state.moneda = cfg.moneda || '$';
       state.hora = cfg.hora || 1000;
-      state.isPro = cfg.isPro || false;
       state.lang = cfg.lang || 'es';
       state.darkMode = cfg.darkMode || false;
     }
@@ -1077,8 +1011,6 @@
     
     // Init Margin Button Active State
     updateMarginUI();
-
-    if(state.isPro) unlockUI();
     
     renderMatList();
     renderExtraList();
@@ -1335,7 +1267,6 @@
     Storage.setCfg({
       moneda: state.moneda,
       hora: state.hora,
-      isPro: state.isPro,
       lang: state.lang,
       darkMode: state.darkMode
     });
@@ -1390,29 +1321,6 @@
     $('timerDisplay').textContent = `${pad(h)}:${pad(m)}:${pad(s)}`;
   }
   function pad(n) { return n.toString().padStart(2, '0'); }
-
-  // --- PRO LOGIC ---
-  const modal = $('unlockModal');
-  $('btnUnlockTrigger').addEventListener('click', () => {
-    modal.classList.add('active');
-    $('deviceToken').textContent = localStorage.getItem('ac_device_id') || 'DEV-XYZ';
-  });
-  $('btnCloseModal').addEventListener('click', () => modal.classList.remove('active'));
-  $('btnVerifyCode').addEventListener('click', () => {
-    unlockUI();
-    modal.classList.remove('active');
-    alert("🎉 ¡Versión PRO activada!");
-  });
-
-  function unlockUI(){
-    state.isPro = true;
-    saveCfg();
-    $('proSection').classList.remove('pro-locked');
-    $('proOverlay').style.display = 'none';
-    loadSavedProjects();
-    loadLibrary();
-    $('quickLibSection').style.display = 'block';
-  }
 
   // --- LIBRARY ---
   function loadLibrary(){
@@ -1923,7 +1831,7 @@ function abrirConversor() { document.getElementById('modalConversor').classList.
     console.log("Firebase Firestore & Auth loaded");
 
     // UI Listeners
-    $('btnLogin').addEventListener('click', () => {
+    $('btnBigLogin').addEventListener('click', () => {
       const provider = new authMod.GoogleAuthProvider();
       authMod.signInWithPopup(auth, provider).catch(err => console.error("Login error:", err));
     });
@@ -1932,13 +1840,9 @@ function abrirConversor() { document.getElementById('modalConversor').classList.
       authMod.signOut(auth).then(() => {
         state.user = null;
         Storage.data = { projects: [], library: [], cfg: {} };
-        $('btnLogin').style.display = 'inline-block';
+        $('loginScreen').style.display = 'flex';
+        $('appContent').style.display = 'none';
         $('btnLogout').style.display = 'none';
-
-        // Switch back to local data view
-        init();
-        loadSavedProjects();
-        loadLibrary();
       });
     });
 
@@ -1946,7 +1850,8 @@ function abrirConversor() { document.getElementById('modalConversor').classList.
     authMod.onAuthStateChanged(auth, async (user) => {
       if (user) {
         state.user = user;
-        $('btnLogin').style.display = 'none';
+        $('loginScreen').style.display = 'none';
+        $('appContent').style.display = 'flex';
         $('btnLogout').style.display = 'inline-block';
 
         // 1. Fetch Cloud Data
@@ -2008,12 +1913,26 @@ function abrirConversor() { document.getElementById('modalConversor').classList.
         init();
         loadSavedProjects();
         loadLibrary();
+      } else {
+        state.user = null;
+        $('loginScreen').style.display = 'flex';
+        $('appContent').style.display = 'none';
+        $('btnLogout').style.display = 'none';
       }
     });
 
   }).catch((error) => {
     console.error("Error loading Firebase:", error);
   });
+
+  // Forzar actualización del Service Worker para que todos vean el nuevo login obligatorio
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.getRegistrations().then(function(registrations) {
+      for(let registration of registrations) {
+        registration.update();
+      }
+    });
+  }
 </script>
 <div id="modalConversor" class="modal">
   <div class="modal-card">
