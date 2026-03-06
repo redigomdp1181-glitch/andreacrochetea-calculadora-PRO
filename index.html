@@ -1789,6 +1789,20 @@ function abrirConversor() { document.getElementById('modalConversor').classList.
   }
   init();
 
+  const firebaseConfig = {
+    apiKey: "AIzaSyBkvvWRWMBHE_KQ95PNbZ0WhuEha76O3eU",
+    authDomain: "calculadora-andrea-crochetea.firebaseapp.com",
+    projectId: "calculadora-andrea-crochetea",
+    storageBucket: "calculadora-andrea-crochetea.firebasestorage.app",
+    messagingSenderId: "1036575843503",
+    appId: "1:1036575843503:web:0367665dad96d84ccd605a"
+  };
+
+  import("https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js").then((firebase) => {
+    firebase.initializeApp(firebaseConfig);
+  }).catch((error) => {
+    console.error("Error loading Firebase:", error);
+  });
 </script>
 <div id="modalConversor" class="modal">
   <div class="modal-card">
