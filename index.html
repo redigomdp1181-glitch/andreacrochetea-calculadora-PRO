@@ -69,15 +69,7 @@
     }
 
     .wrap {
-      display: block;
-      width: 100%;
-      max-width: 600px;
-      margin: 0 auto;
-      padding: 20px;
-      position: relative;
-      z-index: 1;
-      box-sizing: border-box;
-      overflow-x: hidden;
+      display: flex; flex-direction: column; align-items: center; width: 100%; max-width: 600px; margin: 0 auto; padding: 20px; box-sizing: border-box;
     }
 
     /* Header */
@@ -119,12 +111,10 @@
 
     /* Cards and Sections */
     section, .card {
-      display: block;
-      width: 100%;
+      width: 100%; display: block; margin-bottom: 20px;
       background: var(--card-bg);
       border-radius: var(--radius);
       padding: 20px;
-      margin-bottom: 20px;
       box-shadow: var(--shadow);
       border: 1px solid var(--border);
       transition: transform 0.2s;
@@ -168,14 +158,11 @@
       background: #fff;
     }
 
-    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+    .row { display: flex; flex-direction: column; gap: 15px; }
 
     /* Result Boxes */
     .result-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr 1fr;
-      gap: 10px;
-      margin-top: 10px;
+      display: flex; flex-direction: column; gap: 10px; margin-top: 10px;
     }
     .res-box {
       background: var(--bg);
@@ -187,7 +174,6 @@
     .res-box.main {
       background: #f0ebf8; /* Un lila muy suave */
       border-color: var(--primary);
-      grid-column: span 3; /* Ocupa todo el ancho */
       padding: 15px;
     }
     .res-label { font-size: 0.75rem; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px; }
@@ -477,7 +463,7 @@
     <div id="matList"></div>
 
     <div style="margin-top:15px; border-top:1px dashed var(--border); padding-top:15px">
-      <div class="row" style="grid-template-columns: 1.5fr 1fr">
+      <div class="row" style="display: flex; flex-direction: column; gap: 15px;">
         <div>
           <label>Material</label>
           <input id="new_mat_name" type="text" placeholder="Nombre del material">
@@ -556,7 +542,7 @@
     <div id="extraList"></div>
 
     <div style="margin-top:10px; border-top:1px dashed var(--border); padding-top:15px">
-      <div class="row" style="grid-template-columns: 1.5fr 1fr">
+      <div class="row" style="display: flex; flex-direction: column; gap: 15px;">
         <div>
           <label>Tipo de Gasto</label>
           <input list="extra_suggestions" id="new_extra_type" placeholder="Ej: Envío" style="width:100%">
@@ -672,7 +658,7 @@
       <!-- Lista de guardados -->
       <div id="savedList" style="margin-top:20px; border-top:1px solid var(--border); padding-top:15px;">
         <label>Proyectos Guardados</label>
-        <div id="projectsContainer" style="display:grid; gap:8px"></div>
+        <div id="projectsContainer" style="display: flex; flex-direction: column; gap: 8px;"></div>
       </div>
     </div>
 
