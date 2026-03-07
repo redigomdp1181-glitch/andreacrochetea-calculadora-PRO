@@ -48,9 +48,7 @@
       background-color: var(--bg);
       color: var(--text);
       line-height: 1.5;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
+      min-height: 100vh;  
     }
 
     /* Marca de agua de fondo */
@@ -69,8 +67,13 @@
     }
 
     .wrap {
-      display: flex; flex-direction: column; align-items: center; width: 100%; max-width: 600px; margin: 0 auto; padding: 20px; box-sizing: border-box;
-    }
+  display: block !important;
+  width: 95% !important;
+  max-width: 600px !important;
+  margin: 0 auto !important;
+  padding: 20px !important;
+  box-sizing: border-box !important;
+}
 
     /* Header */
     header {
@@ -109,17 +112,17 @@
     .tab-content { display: none; }
     .tab-content.active { display: block; }
 
-    /* Cards and Sections */
-    section, .card {
-      width: 100%; display: block; margin-bottom: 20px;
+    /* Cards */
+    .card {
       background: var(--card-bg);
       border-radius: var(--radius);
       padding: 20px;
+      margin-bottom: 20px;
       box-shadow: var(--shadow);
       border: 1px solid var(--border);
       transition: transform 0.2s;
     }
-
+    
     .section-title {
       font-size: 1rem;
       font-weight: 700;
@@ -158,11 +161,14 @@
       background: #fff;
     }
 
-    .row { display: flex; flex-direction: column; gap: 15px; }
-
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+    
     /* Result Boxes */
     .result-grid {
-      display: flex; flex-direction: column; gap: 10px; margin-top: 10px;
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 10px;
+      margin-top: 10px;
     }
     .res-box {
       background: var(--bg);
@@ -174,6 +180,7 @@
     .res-box.main {
       background: #f0ebf8; /* Un lila muy suave */
       border-color: var(--primary);
+      grid-column: span 3; /* Ocupa todo el ancho */
       padding: 15px;
     }
     .res-label { font-size: 0.75rem; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px; }
@@ -463,7 +470,7 @@
     <div id="matList"></div>
 
     <div style="margin-top:15px; border-top:1px dashed var(--border); padding-top:15px">
-      <div class="row" style="display: flex; flex-direction: column; gap: 15px;">
+      <div class="row" style="grid-template-columns: 1.5fr 1fr">
         <div>
           <label>Material</label>
           <input id="new_mat_name" type="text" placeholder="Nombre del material">
@@ -542,7 +549,7 @@
     <div id="extraList"></div>
 
     <div style="margin-top:10px; border-top:1px dashed var(--border); padding-top:15px">
-      <div class="row" style="display: flex; flex-direction: column; gap: 15px;">
+      <div class="row" style="grid-template-columns: 1.5fr 1fr">
         <div>
           <label>Tipo de Gasto</label>
           <input list="extra_suggestions" id="new_extra_type" placeholder="Ej: Envío" style="width:100%">
@@ -658,7 +665,7 @@
       <!-- Lista de guardados -->
       <div id="savedList" style="margin-top:20px; border-top:1px solid var(--border); padding-top:15px;">
         <label>Proyectos Guardados</label>
-        <div id="projectsContainer" style="display: flex; flex-direction: column; gap: 8px;"></div>
+        <div id="projectsContainer" style="display:grid; gap:8px"></div>
       </div>
     </div>
 
@@ -1841,7 +1848,7 @@ function abrirConversor() { document.getElementById('modalConversor').classList.
       if (user) {
         state.user = user;
         $('loginScreen').style.display = 'none';
-        $('appContent').style.display = '';
+        $('appContent').style.display = 'flex';
         $('btnLogout').style.display = 'inline-block';
 
         // 1. Fetch Cloud Data
