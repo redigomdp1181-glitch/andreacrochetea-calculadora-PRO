@@ -135,45 +135,6 @@
 
     /* Form Elements */
     .form-group { margin-bottom: 15px; }
-
-    /* Switch */
-    .switch {
-      position: relative;
-      display: inline-block;
-      width: 44px;
-      height: 24px;
-    }
-    .switch input {
-      opacity: 0;
-      width: 0;
-      height: 0;
-    }
-    .slider {
-      position: absolute;
-      cursor: pointer;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background-color: #ccc;
-      transition: .4s;
-      border-radius: 24px;
-    }
-    .slider:before {
-      position: absolute;
-      content: "";
-      height: 18px;
-      width: 18px;
-      left: 3px;
-      bottom: 3px;
-      background-color: white;
-      transition: .4s;
-      border-radius: 50%;
-    }
-    input:checked + .slider {
-      background-color: var(--primary);
-    }
-    input:checked + .slider:before {
-      transform: translateX(20px);
-    }
-
     label {
       display: block;
       font-size: 0.85rem;
@@ -445,7 +406,26 @@
     }
     body.dark-mode #timerDisplay { color: #e0e0e0 !important; }
 
-  </style>
+/* Estilos del Switch Corregidos Andrea Crochetea */
+.switch-container { position: relative; width: 65px; height: 30px; cursor: pointer; }
+.switch-container input { opacity: 0; width: 0; height: 0; }
+.switch-control {
+  position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+  background-color: #ccc; transition: .4s; border-radius: 34px;
+  display: flex; align-items: center; padding: 0 8px;
+}
+.switch-no { color: white; font-size: 10px; font-weight: bold; margin-left: auto; display: block; }
+.switch-yes { color: white; font-size: 10px; font-weight: bold; display: none; }
+.switch-handle {
+  position: absolute; height: 22px; width: 22px; left: 4px; bottom: 4px;
+  background-color: white; transition: .4s; border-radius: 50%; z-index: 2;
+}
+/* Lógica visual: Cuando está activado (SÍ) */
+input:checked + .switch-control { background-color: var(--primary); }
+input:checked + .switch-control .switch-handle { transform: translateX(35px); }
+input:checked + .switch-control .switch-no { display: none; }
+input:checked + .switch-control .switch-yes { display: block; margin-right: auto; }  
+</style>
 </head>
 <body>
 
@@ -651,12 +631,10 @@
   <!-- SECCIÓN PROYECTOS / BIBLIOTECA -->
   <section id="proSection" class="card">
     <!-- Contenido -->
-    <div class="tabs">
-      <button class="tab-btn active" onclick="openProTab('tabProject')">📂 Proyectos</button>
-      <button class="tab-btn" onclick="openProTab('tabLibrary')">🧵 Biblioteca / Stock</button>
-      <button class="tab-btn" onclick="openProTab('tabBudget')">🧾 Presupuesto</button>
-    </div>
-
+   <div class="tabs" style="display: flex; gap: 10px; margin-bottom: 20px;">
+  <button class="tab-btn active" onclick="openProTab('tabProject')" style="flex: 1; padding: 12px; cursor: pointer;">📂 Proyectos</button>
+  <button class="tab-btn" onclick="openProTab('tabLibrary')" style="flex: 1; padding: 12px; cursor: pointer;">🧵 Biblioteca / Stock</button>
+</div>
     <!-- TAB 1: PROYECTOS -->
     <div id="tabProject" class="tab-content active">
       <!-- Importar / Exportar Controles -->
@@ -679,14 +657,28 @@
                 <input id="pro_client_email" type="email" placeholder="Email" style="flex:1">
               </div>
               <textarea id="pro_client_details" placeholder="Detalle del pedido..." rows="2"></textarea>
-              <div style="display:flex; justify-content:space-between; align-items:center; margin-top:5px">
-                <label style="margin:0; font-size:0.85rem; color:#666">¿Cobrar seña (50%)?</label>
-                <label class="switch" style="margin:0">
-                  <input type="checkbox" id="pro_charge_deposit" checked>
-                  <span class="slider"></span>
-                </label>
-              </div>
-            </div>
+  </div>
+ <div style="background: #fdfbff; padding: 15px; border-radius: 12px; border: 1px solid #eee; margin-top: 15px;">
+  
+  <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;">
+    <span style="font-size: 0.95rem; color: #555; font-weight: 600;">¿Cobrar seña (50%)?</span>
+    <label class="switch-container">
+      <input type="checkbox" id="pro_charge_deposit" checked>
+      <div class="switch-control">
+        <span class="switch-no">NO</span>
+        <span class="switch-yes">SÍ</span>
+        <div class="switch-handle"></div>
+      </div>
+    </label>
+  </div>
+
+  <button id="btnGenCard" style="width: 100%; padding: 12px; background: var(--primary); color: white; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; font-size: 1rem; display: flex; align-items: center; justify-content: center; gap: 8px;">
+    <span>📄</span> Generar Presupuesto
+  </button>
+</div>
+
+  <div style="display:flex; gap:10px; align-items:center; ...">
+
           </div>
           
           <div style="display:flex; gap:10px; align-items:center; background:#f9f9f9; padding:8px; border-radius:10px; border:1px solid #eee">
@@ -711,9 +703,9 @@
       <!-- Lista de guardados -->
       <div id="savedList" style="margin-top:20px; border-top:1px solid var(--border); padding-top:15px;">
         <label>Proyectos Guardados</label>
-        <div id="projectsContainer" style="display:grid; gap:8px"></div>
-      </div>
+       <div id="projectsContainer" style="display:grid; gap:8px"></div>
     </div>
+  
 
     <!-- TAB 2: BIBLIOTECA -->
     <div id="tabLibrary" class="tab-content">
@@ -912,7 +904,6 @@
     currentProjectId: null,
     lang: 'es',
     darkMode: false,
-    chargeDeposit: true,
     timerInterval: null,
     timerStart: 0,
     elapsedMs: 0,
@@ -1445,7 +1436,7 @@
     }
   });
 
-  // --- CARD GEN ---
+// --- CARD GEN (VERSIÓN CON SWITCH INTELIGENTE) ---
   $('btnGenCard').addEventListener('click', () => {
     $('budgetModal').classList.add('active');
     $('cardTitle').textContent = $('pro_name').value || 'Mi Proyecto';
@@ -1456,43 +1447,40 @@
     const cDetails = $('pro_client_details').value;
 
     $('cardClient').textContent = cName ? `Cliente: ${cName}` : '';
-
     let infoArr = [];
     if(cPhone) infoArr.push(`📞 ${cPhone}`);
     if(cEmail) infoArr.push(`✉️ ${cEmail}`);
     $('cardClientInfo').textContent = infoArr.join(' | ');
-
     $('cardClientDetails').textContent = cDetails ? `"${cDetails}"` : '';
     
-    // Use the total displayed price (Quantity included)
+    // Precio Total
     $('cardPrice').textContent = $('res_venta').textContent;
-    
-    // Breakdown logic
-    const unitPrice = $('res_unit').textContent || ''; // "Unitario: $ 1.000"
+
+    // Lógica del desglose (unidades)
+    const unitPrice = $('res_unit').textContent || '';
     const q = state.quantity;
     if(q > 1 && unitPrice) {
-       // Extract just the amount
        $('cardBreakdown').textContent = `${q} unidades x ${unitPrice.replace('Unitario: ', '')} = Total`;
     } else {
        $('cardBreakdown').textContent = '';
     }
     
-    // Deposit calculation logic
-    const priceStr = $('res_venta').textContent;
-    let priceVal = 0;
-    if(priceStr){
+    // --- EL CEREBRO DEL SWITCH ---
+    const depositCheckbox = document.getElementById('pro_charge_deposit');
+    const depositRow = $('cardDeposit');
+    
+    if (depositCheckbox && depositCheckbox.checked) {
+       // Si el switch está en SÍ: calculamos y mostramos el 50%
+       const priceStr = $('res_venta').textContent;
        const raw = priceStr.replace(/[^0-9,]/g, '').replace(',', '.');
-       priceVal = parseFloat(raw) || 0;
-    }
-    const deposit = priceVal / 2;
-    const t = translations[state.lang] || translations['es'];
-
-    if ($('pro_charge_deposit').checked) {
-      $('cardDeposit').textContent = `${t.sena_reserva}: ${fmt(deposit)}`;
-      $('cardDeposit').style.display = 'block';
+       const priceVal = parseFloat(raw) || 0;
+       const deposit = priceVal / 2;
+       const t = translations[state.lang] || translations['es'];
+       depositRow.textContent = `${t.sena_reserva}: ${fmt(deposit)}`;
+       depositRow.style.display = 'block';
     } else {
-      $('cardDeposit').textContent = '';
-      $('cardDeposit').style.display = 'none';
+       // Si el switch está en NO: escondemos el renglón lila por completo
+       depositRow.style.display = 'none';
     }
   });
   $('btnCloseCard').addEventListener('click', () => $('budgetModal').classList.remove('active'));
@@ -1555,7 +1543,6 @@
     const client_phone = $('pro_client_phone').value;
     const client_email = $('pro_client_email').value;
     const client_details = $('pro_client_details').value;
-    const charge_deposit = $('pro_charge_deposit').checked;
     
     const project = {
       id: isUpdate ? state.currentProjectId : Date.now(),
@@ -1564,7 +1551,6 @@
       client_phone,
       client_email,
       client_details,
-      chargeDeposit: charge_deposit,
       status: state.status,
       quantity: state.quantity,
       margen: state.margen,
@@ -1662,9 +1648,6 @@
       $('pro_client_email').value = p.client_email || '';
       $('pro_client_details').value = p.client_details || '';
       
-      state.chargeDeposit = p.chargeDeposit !== false;
-      $('pro_charge_deposit').checked = state.chargeDeposit;
-
       state.status = p.status || 'Pendiente';
       updateStatusUI();
 
@@ -1701,8 +1684,6 @@
       $('pro_client_phone').value = '';
       $('pro_client_email').value = '';
       $('pro_client_details').value = '';
-      state.chargeDeposit = true;
-      $('pro_charge_deposit').checked = true;
       state.status = 'Pendiente';
       updateStatusUI();
       
@@ -1840,15 +1821,32 @@
     if(type === 'min') $('res_min').parentElement.style.borderColor = 'var(--primary)';
     if(type === 'mayor') $('res_mayor').parentElement.style.borderColor = 'var(--primary)';
   };
-  window.openProTab = (tabId) => {
-    document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-    document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
-    $(tabId).classList.add('active');
-    const btns = document.querySelectorAll('.tab-btn');
-    if(tabId === 'tabProject') btns[0].classList.add('active');
-    if(tabId === 'tabLibrary') btns[1].classList.add('active');
-    if(tabId === 'tabBudget')  btns[2].classList.add('active');
-  };
+window.openProTab = (tabId) => {
+  // 1. Apagamos TODO lo que tenga la clase 'tab-content' con un martillazo
+  const contenidos = document.querySelectorAll('.tab-content');
+  contenidos.forEach(div => {
+    div.style.setProperty('display', 'none', 'important');
+    div.classList.remove('active');
+  });
+
+  // 2. Apagamos los botones de arriba
+  const botones = document.querySelectorAll('.tab-btn');
+  botones.forEach(btn => btn.classList.remove('active'));
+
+ // 3. MOSTRAMOS la sección
+  const seccion = document.getElementById(tabId);
+  if (seccion) {
+    // Usamos estilos directos para que flote por sobre todo
+    seccion.style.cssText = "display: block !important; visibility: visible !important; opacity: 1 !important; position: relative !important; z-index: 9999 !important;";
+    seccion.classList.add('active');
+    console.log("Forzando apertura visual de: " + tabId);
+  }
+
+  // 4. Pintamos el botón para que sepa que fue presionado
+  // Buscamos el botón 0 (Proyectos) o el botón 1 (Biblioteca)
+  if (tabId === 'tabProject') botones[0].classList.add('active');
+  if (tabId === 'tabLibrary') botones[1].classList.add('active');
+};
 function abrirConversor() { document.getElementById('modalConversor').classList.add('active'); }
   function cerrarConversor() { document.getElementById('modalConversor').classList.remove('active'); }
   function aplicarConversion() {
