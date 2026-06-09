@@ -27,11 +27,14 @@ const client = new Client({
     authStrategy: new LocalAuth(),
     puppeteer: {
     headless: true,
+    executablePath: null, // Esto es clave: le decimos que no busque ningún path
     args: [
         '--no-sandbox',
         '--disable-setuid-sandbox',
         '--disable-dev-shm-usage',
-        '--disable-gpu'
+        '--disable-gpu',
+        '--no-zygote',
+        '--single-process'
     ]
 }
 });
