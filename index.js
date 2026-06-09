@@ -26,11 +26,9 @@ let botStatus = 'desconectado';
 const client = new Client({
     authStrategy: new LocalAuth(),
     puppeteer: {
-        args: ['--no-sandbox', '--disable-setuid-sandbox'],
-        executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe'
+        args: ['--no-sandbox', '--disable-setuid-sandbox']
     }
 });
-
 client.on('qr', (qr) => {
     botStatus = 'esperando_qr';
     qrcode.generate(qr, { small: true });
