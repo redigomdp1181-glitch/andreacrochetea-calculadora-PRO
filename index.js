@@ -26,8 +26,9 @@ let botStatus = 'desconectado';
 const client = new Client({
     authStrategy: new LocalAuth(),
     puppeteer: {
-        args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
-    }
+    headless: true,
+    args: ['--no-sandbox', '--disable-setuid-sandbox']
+}
 });
 
 client.on('qr', (qr) => {
