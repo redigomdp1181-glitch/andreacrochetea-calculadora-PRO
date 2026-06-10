@@ -2,9 +2,12 @@ FROM ghcr.io/puppeteer/puppeteer:latest
 
 WORKDIR /app
 
-COPY package*.json ./
+# Esto es lo que faltaba: le damos permiso al usuario 'pptruser'
+COPY --chown=pptruser:pptruser package*.json ./
 RUN npm install
 
-COPY . .
+COPY --chown=pptruser:pptruser . .
+
+USER pptruser
 
 CMD ["node", "index.js"]
