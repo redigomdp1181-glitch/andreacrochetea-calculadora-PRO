@@ -23,13 +23,15 @@ let emprendedorConfig = {
 const chatHistories = {};
 let botStatus = 'desconectado';
 
+const { Client, LocalAuth } = require('whatsapp-web.js');
+
 const client = new Client({
+    authStrategy: new LocalAuth({
+        dataPath: '.wwebjs_auth' // Esto le dice al bot que guarde la sesión acá
+    }),
     puppeteer: {
         headless: true,
-        args: [
-            '--no-sandbox',
-            '--disable-setuid-sandbox'
-        ]
+        args: ['--no-sandbox', '--disable-setuid-sandbox']
     }
 });
 
@@ -66,7 +68,10 @@ client.on('message', async (msg) => {
         await client.sendMessage(msg.from, iaResponse);
     } catch (e) { console.error(e); }
 });
-
+client.on('qr', (qr) => {
+    // Esto genera un link para ver el QR en una web, mucho más fácil de escanear
+    console.log('QR RECIBIDO, escanealo desde aquí: https://api.qrserver.com/v1/create-qr-code/?data=' + encodeURIComponent(qr));
+});
 client.initialize();
 
 app.get('/', (req, res) => { res.render('dashboard', { config: emprendedorConfig, botStatus }); });
