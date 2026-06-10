@@ -26,15 +26,10 @@ let botStatus = 'desconectado';
 const client = new Client({
     puppeteer: {
         headless: true,
+        executablePath: '/usr/bin/chromium', // Probamos con esta ruta
         args: [
             '--no-sandbox',
-            '--disable-setuid-sandbox',
-            '--disable-dev-shm-usage',
-            '--disable-accelerated-2d-canvas',
-            '--no-first-run',
-            '--no-zygote',
-            '--single-process', // A veces esto ayuda mucho en servidores
-            '--disable-gpu'
+            '--disable-setuid-sandbox'
         ]
     }
 });
