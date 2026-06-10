@@ -1,5 +1,4 @@
 const { Client, LocalAuth } = require('whatsapp-web.js');
-const qrcode = require('qrcode-terminal');
 const { OpenAI } = require('openai');
 const express = require('express');
 const bodyParser = require('body-parser');
@@ -7,6 +6,7 @@ require('dotenv').config();
 
 const app = express();
 const port = 3000;
+
 app.set('view engine', 'ejs');
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static('public'));
@@ -23,11 +23,10 @@ let emprendedorConfig = {
 const chatHistories = {};
 let botStatus = 'desconectado';
 
-const { Client, LocalAuth } = require('whatsapp-web.js');
-
+// Configuramos el cliente UNA SOLA VEZ
 const client = new Client({
     authStrategy: new LocalAuth({
-        dataPath: '.wwebjs_auth' // Esto le dice al bot que guarde la sesión acá
+        dataPath: '.wwebjs_auth'
     }),
     puppeteer: {
         headless: true,
@@ -35,14 +34,16 @@ const client = new Client({
     }
 });
 
+// Evento para el QR (usando el link que es más fácil de escanear)
 client.on('qr', (qr) => {
     botStatus = 'esperando_qr';
-    qrcode.generate(qr, { small: true });
+    console.log('QR RECIBIDO, escanealo desde aquí: https://api.qrserver.com/v1/create-qr-code/?data=' + encodeURIComponent(qr));
 });
 
 client.on('ready', () => { botStatus = 'conectado'; });
 client.on('disconnected', () => { botStatus = 'desconectado'; });
 
+// Lógica de mensajes con OpenAI
 client.on('message', async (msg) => {
     if (msg.from.includes('@g.us') || msg.fromMe) return;
     const userId = msg.from;
@@ -68,10 +69,7 @@ client.on('message', async (msg) => {
         await client.sendMessage(msg.from, iaResponse);
     } catch (e) { console.error(e); }
 });
-client.on('qr', (qr) => {
-    // Esto genera un link para ver el QR en una web, mucho más fácil de escanear
-    console.log('QR RECIBIDO, escanealo desde aquí: https://api.qrserver.com/v1/create-qr-code/?data=' + encodeURIComponent(qr));
-});
+
 client.initialize();
 
 app.get('/', (req, res) => { res.render('dashboard', { config: emprendedorConfig, botStatus }); });
