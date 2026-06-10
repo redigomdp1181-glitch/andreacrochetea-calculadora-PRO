@@ -28,10 +28,16 @@ const client = new Client({
     authStrategy: new LocalAuth({
         dataPath: '.wwebjs_auth'
     }),
-    puppeteer: {
-        headless: true,
-        args: ['--no-sandbox', '--disable-setuid-sandbox']
-    }
+   puppeteer: {
+    headless: true,
+    args: [
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--disable-dev-shm-usage', // ESTO ES CLAVE: evita que el bot se cuelgue por memoria
+        '--no-zygote'
+    ],
+    timeout: 60000 // Le damos 60 segundos para arrancar
+}
 });
 
 // Evento para el QR (usando el link que es más fácil de escanear)
