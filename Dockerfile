@@ -1,13 +1,12 @@
 FROM ghcr.io/puppeteer/puppeteer:latest
 
-WORKDIR /app
+USER root
+RUN apt-get update && apt-get install -y chromium
+USER pptruser
 
-# Esto es lo que faltaba: le damos permiso al usuario 'pptruser'
+WORKDIR /app
 COPY --chown=pptruser:pptruser package*.json ./
 RUN npm install
-
 COPY --chown=pptruser:pptruser . .
-
-USER pptruser
 
 CMD ["node", "index.js"]
