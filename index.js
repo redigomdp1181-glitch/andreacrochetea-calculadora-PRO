@@ -26,7 +26,7 @@ let botStatus = 'desconectado';
 const client = new Client({
     puppeteer: {
         headless: true,
-        executablePath: '/usr/bin/chromium', // Probamos con esta ruta
+        executablePath:'/usr/bin/chromium-browser' , // Probamos con esta ruta
         args: [
             '--no-sandbox',
             '--disable-setuid-sandbox'
