@@ -31,7 +31,7 @@ Información clave para tus respuestas:
 Regla de oro: Si te preguntan si sirve para su emprendimiento o cómo funciona, explicáselo con seguridad. Tu tono siempre debe ser motivador: les hacés entender que la app les ahorra tiempo y les evita perder plata.`
 };
 
-const chatHistories = {};
+let chatHistories = {};
 let botStatus = 'desconectado';
 
 // Configuramos el cliente UNA SOLA VEZ
@@ -68,11 +68,8 @@ client.on('message', async (msg) => {
     Info: ${emprendedorConfig.productos}. Pago: ${emprendedorConfig.metodoPago}. 
     Reglas: ${emprendedorConfig.reglas}`;
 
-    if (!chatHistories[userId]) {
-        chatHistories[userId] = [{ role: "system", content: systemPrompt }];
-    } else {
-        chatHistories[userId][0] = { role: "system", content: systemPrompt };
-    }
+    // Borramos el if/else antiguo y forzamos la nueva configuración en cada mensaje:
+chatHistories[userId] = [{ role: "system", content: systemPrompt }];
 
     chatHistories[userId].push({ role: "user", content: msg.body });
     
