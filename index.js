@@ -69,9 +69,12 @@ client.on('message', async (msg) => {
     Reglas: ${emprendedorConfig.reglas}`;
 
     // Borramos el if/else antiguo y forzamos la nueva configuración en cada mensaje:
-chatHistories[userId] = [{ role: "system", content: systemPrompt }];
-
-    chatHistories[userId].push({ role: "user", content: msg.body });
+// Si no existe historia previa para este usuario, la creamos
+if (!chatHistories[userId]) {
+    chatHistories[userId] = [{ role: "system", content: systemPrompt }];
+}
+// Ahora, siempre agregamos el nuevo mensaje del usuario
+chatHistories[userId].push({ role: "user", content: msg.body });
     
     try {
         const completion = await openai.chat.completions.create({
